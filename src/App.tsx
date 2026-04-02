@@ -1,53 +1,50 @@
-import { useEffect } from 'react';
-import { useGameStore } from './stores/gameStore';
-import { useDialogStore } from './stores/dialogStore';
-import { useBattleStore } from './stores/battleStore';
-import { TitleScreen } from './components/ui/TitleScreen';
-import { OverworldScreen } from './components/overworld/OverworldScreen';
-import { DialogBox } from './components/ui/DialogBox';
-import { BattleScreen } from './components/battle/BattleScreen';
-import { MenuScreen } from './components/ui/MenuScreen';
-import { ShopScreen } from './components/ui/ShopScreen';
-import { VIEWPORT_WIDTH, VIEWPORT_HEIGHT } from './utils/constants';
+import { useRunStore } from './stores/runStore';
+import { TitleScreen } from './components/screens/TitleScreen';
+import { MapScreen } from './components/screens/MapScreen';
+import { CombatScreen } from './components/screens/CombatScreen';
+import { RestScreen } from './components/screens/RestScreen';
+import { GameOverScreen, VictoryScreen } from './components/screens/GameOverScreen';
 
 function App() {
-  const gamePhase = useGameStore((s) => s.gamePhase);
-  const setGamePhase = useGameStore((s) => s.setGamePhase);
-  const dialogActive = useDialogStore((s) => s.active);
-  const battleActive = useBattleStore((s) => s.active);
-  const shopItems = useDialogStore((s) => s.shopItems);
-
-  // Escape key returns to overworld from menu
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && gamePhase === 'menu' && !shopItems) {
-        setGamePhase('overworld');
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [gamePhase, shopItems, setGamePhase]);
+  const screen = useRunStore((s) => s.screen);
 
   return (
-    <div style={{ width: VIEWPORT_WIDTH, height: VIEWPORT_HEIGHT, position: 'relative' }}>
-      {gamePhase === 'title' && <TitleScreen />}
-
-      {gamePhase === 'overworld' && (
-        <>
-          <OverworldScreen />
-          {dialogActive && <DialogBox />}
-        </>
-      )}
-
-      {gamePhase === 'battle' && battleActive && <BattleScreen />}
-
-      {gamePhase === 'menu' && !shopItems && (
-        <MenuScreen onClose={() => setGamePhase('overworld')} />
-      )}
-
-      {gamePhase === 'menu' && shopItems && <ShopScreen />}
+    <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden' }}>
+      {screen === 'title' && <TitleScreen />}
+      {screen === 'map' && <MapScreen />}
+      {screen === 'combat' && <CombatScreen />}
+      {screen === 'rest' && <RestScreen />}
+      {screen === 'gameOver' && <GameOverScreen />}
+      {screen === 'victory' && <VictoryScreen />}
+      {screen === 'event' && <PlaceholderScreen label="Event" />}
+      {screen === 'shop' && <PlaceholderScreen label="Shop" />}
+      {screen === 'knowledgeBase' && <PlaceholderScreen label="Knowledge Base" />}
     </div>
   );
 }
+
+function PlaceholderScreen({ label }: { label: string }) {
+  const setScreen = useRunStore((s) => s.setScreen);
+  return (
+    <div style={{ ...fullScreen, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ fontSize: 20, marginBottom: 16 }}>{label} (Coming Soon)</div>
+      <button
+        onClick={() => setScreen('map')}
+        style={{
+          padding: '10px 24px', background: 'rgba(123, 104, 238, 0.2)',
+          border: '2px solid #7b68ee', borderRadius: 8, color: '#e0e0e0',
+          fontFamily: 'monospace', cursor: 'pointer',
+        }}
+      >
+        Back to Map
+      </button>
+    </div>
+  );
+}
+
+export const fullScreen: React.CSSProperties = {
+  width: '100%', height: '100%',
+  background: '#0c0c1a', fontFamily: 'monospace', color: '#e0e0e0',
+};
 
 export default App;

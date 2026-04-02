@@ -1,36 +1,20 @@
-import { useGameStore } from '../../stores/gameStore';
-import { createSynth } from '../../utils/synth';
-import { VIEWPORT_WIDTH, VIEWPORT_HEIGHT } from '../../utils/constants';
+import { useEffect } from 'react';
+import { useRunStore } from '../../stores/runStore';
+import { useMetaStore } from '../../stores/metaStore';
 
 export function TitleScreen() {
-  const setGamePhase = useGameStore((s) => s.setGamePhase);
-  const addToParty = useGameStore((s) => s.addToParty);
-  const loadGame = useGameStore((s) => s.loadGame);
-  const party = useGameStore((s) => s.party);
+  const startNewRun = useRunStore((s) => s.startNewRun);
+  const meta = useMetaStore();
 
-  const handleNewGame = () => {
-    // Give the player a starter Chatter
-    if (party.length === 0) {
-      const starter = createSynth('chatter', 5);
-      starter.nickname = 'Chatter';
-      addToParty(starter);
-    }
-    setGamePhase('overworld');
-  };
-
-  const handleContinue = () => {
-    if (loadGame()) {
-      // loaded successfully
-    } else {
-      alert('No save data found!');
-    }
-  };
+  useEffect(() => {
+    meta.load();
+  }, []);
 
   return (
     <div
       style={{
-        width: VIEWPORT_WIDTH,
-        height: VIEWPORT_HEIGHT,
+        width: '100%',
+        height: '100%',
         background: 'linear-gradient(180deg, #0f0f23 0%, #1a1a3e 40%, #2d1b4e 100%)',
         display: 'flex',
         flexDirection: 'column',
@@ -44,7 +28,7 @@ export function TitleScreen() {
         overflow: 'hidden',
       }}
     >
-      {/* Animated background particles */}
+      {/* Particles */}
       <div style={{ position: 'absolute', inset: 0, opacity: 0.3 }}>
         {Array.from({ length: 20 }).map((_, i) => (
           <div
@@ -68,52 +52,48 @@ export function TitleScreen() {
       <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
         <h1
           style={{
-            fontSize: 48,
+            fontSize: 52,
             fontWeight: 'bold',
             margin: 0,
             background: 'linear-gradient(135deg, #7b68ee, #a78bfa, #60a5fa)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
-            textShadow: 'none',
             letterSpacing: -1,
           }}
         >
           SynthQuest
         </h1>
         <p style={{ fontSize: 14, color: '#9ca3af', marginTop: 4 }}>
-          Train AI creatures. Save the digital world.
+          Build an AI system. Save the digital world.
+        </p>
+        <p style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
+          A deck-building roguelike
         </p>
       </div>
 
-      {/* Menu */}
-      <div
-        style={{
-          marginTop: 48,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 12,
-          position: 'relative',
-          zIndex: 1,
-        }}
-      >
-        <button onClick={handleNewGame} style={buttonStyle}>
-          New Game
+      {/* Buttons */}
+      <div style={{ marginTop: 48, display: 'flex', flexDirection: 'column', gap: 12, position: 'relative', zIndex: 1 }}>
+        <button onClick={startNewRun} style={buttonStyle}>
+          New Run
         </button>
-        <button onClick={handleContinue} style={{ ...buttonStyle, background: 'rgba(255,255,255,0.05)' }}>
-          Continue
+        <button
+          onClick={() => useRunStore.getState().setScreen('knowledgeBase')}
+          style={{ ...buttonStyle, background: 'rgba(255,255,255,0.05)' }}
+        >
+          Knowledge Base ({meta.knowledgeUnlocked.length})
         </button>
       </div>
 
+      {/* Stats */}
+      {meta.totalRuns > 0 && (
+        <div style={{ position: 'absolute', bottom: 40, fontSize: 11, color: '#4b5563', textAlign: 'center' }}>
+          Runs: {meta.totalRuns} | Wins: {meta.wins} | Best Act: {meta.bestAct}
+        </div>
+      )}
+
       {/* Controls hint */}
-      <p
-        style={{
-          position: 'absolute',
-          bottom: 16,
-          fontSize: 11,
-          color: '#6b7280',
-        }}
-      >
-        WASD / Arrows to move | Z / Enter to interact | X / Esc to cancel
+      <p style={{ position: 'absolute', bottom: 16, fontSize: 11, color: '#374151' }}>
+        Click cards to play | Click enemies to target
       </p>
 
       <style>{`
@@ -136,6 +116,5 @@ const buttonStyle: React.CSSProperties = {
   border: '2px solid rgba(123, 104, 238, 0.5)',
   borderRadius: 8,
   cursor: 'pointer',
-  transition: 'all 0.15s',
   letterSpacing: 1,
 };

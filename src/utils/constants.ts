@@ -1,34 +1,76 @@
-export const TILE_SIZE = 16;
-export const SCALE = 3; // pixel art upscale
-export const SCALED_TILE = TILE_SIZE * SCALE; // 48px rendered
+export const VIEWPORT_WIDTH = 960;
+export const VIEWPORT_HEIGHT = 600;
 
-export const VIEWPORT_TILES_X = 15; // odd number for centering
-export const VIEWPORT_TILES_Y = 11;
-export const VIEWPORT_WIDTH = VIEWPORT_TILES_X * SCALED_TILE; // 720
-export const VIEWPORT_HEIGHT = VIEWPORT_TILES_Y * SCALED_TILE; // 528
+// Combat balance
+export const BASE_ENERGY = 3;
+export const BASE_INTEGRITY = 70;
+export const HAND_SIZE = 5;
+export const CONTEXT_CAP = 8;
+export const HALLUCINATION_TRIGGER_CHANCE = 0.3;
+export const HALLUCINATION_SELF_DAMAGE = 3;
 
-export const PLAYER_SPEED = 3; // tiles per second
-export const ENCOUNTER_CHECK_STEPS = 4; // check every N steps in data streams
+// Gold economy
+export const STARTING_GOLD = 99;
+export const COMBAT_GOLD_MIN = 10;
+export const COMBAT_GOLD_MAX = 20;
+export const ELITE_GOLD_MIN = 25;
+export const ELITE_GOLD_MAX = 35;
+export const BOSS_GOLD_MIN = 50;
+export const BOSS_GOLD_MAX = 75;
 
-export const MAX_PARTY_SIZE_BY_RANK = [1, 2, 3, 4, 5, 6];
-export const MAX_MOVES = 4;
+// Shop prices
+export const SHOP_PRICE_COMMON = 50;
+export const SHOP_PRICE_UNCOMMON = 75;
+export const SHOP_PRICE_RARE = 150;
+export const SHOP_CARD_REMOVAL_BASE = 75;
+export const SHOP_CARD_REMOVAL_INCREMENT = 25;
+export const SHOP_RELIC_COMMON = 150;
+export const SHOP_RELIC_UNCOMMON = 250;
 
-export const XP_BASE = 50; // XP needed for level 2
-export const XP_GROWTH = 1.2; // multiplier per level
+// Card reward rarity weights
+export const REWARD_WEIGHTS = {
+  normal: { common: 60, uncommon: 30, rare: 10 },
+  elite: { common: 25, uncommon: 50, rare: 25 },
+  boss: { common: 0, uncommon: 40, rare: 60 },
+} as const;
+
+// Rest site
+export const REST_HEAL_PERCENT = 0.3;
+
+// Between acts
+export const BETWEEN_ACT_HEAL_PERCENT = 0.25;
+
+// Map
+export const MAP_COLS = 7;
+export const MAP_ROWS = 15;
 
 export const COLORS = {
-  bg: '#1a1a2e',
+  bg: '#0f0f23',
+  bgLight: '#1a1a3e',
   text: '#e0e0e0',
-  textDark: '#0f0f23',
+  textDim: '#6b7280',
+  textMuted: '#4b5563',
   accent: '#7b68ee',
+  accentDim: 'rgba(123, 104, 238, 0.2)',
+  border: '#2d2d5e',
+  borderDim: '#374151',
   hp: '#4ade80',
   hpLow: '#ef4444',
-  xp: '#60a5fa',
-  types: {
+  hpMid: '#fbbf24',
+  firewall: '#60a5fa',
+  energy: '#fbbf24',
+  gold: '#fbbf24',
+  categories: {
     text: '#a78bfa',
     structure: '#60a5fa',
     logic: '#f472b6',
     vision: '#fbbf24',
     noise: '#34d399',
-  },
+  } as Record<string, string>,
+  rarity: {
+    starter: '#9ca3af',
+    common: '#e0e0e0',
+    uncommon: '#60a5fa',
+    rare: '#fbbf24',
+  } as Record<string, string>,
 } as const;
