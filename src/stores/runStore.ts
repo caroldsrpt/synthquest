@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import type { RunState, GameScreen, CardInstance, MapNode, StatusType } from '../game/data/types';
-import { BASE_INTEGRITY, STARTING_GOLD, BASE_ENERGY } from '../utils/constants';
+import type { RunState, GameScreen, CardInstance, MapNode } from '../game/data/types';
+import { BASE_INTEGRITY, STARTING_GOLD, BASE_ENERGY, HAND_SIZE } from '../utils/constants';
 import { createStarterDeck } from '../utils/cardUtils';
 
 interface RunStore extends RunState {

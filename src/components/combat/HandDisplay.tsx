@@ -1,5 +1,4 @@
 import type { CardInstance } from '../../game/data/types';
-import { CARDS } from '../../game/data/cards';
 import { CardComponent } from './CardComponent';
 import { getCardCost } from '../../utils/cardUtils';
 

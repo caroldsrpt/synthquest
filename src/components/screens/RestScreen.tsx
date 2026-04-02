@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useRunStore } from '../../stores/runStore';
-import { CARDS } from '../../game/data/cards';
-import { COLORS, REST_HEAL_PERCENT } from '../../utils/constants';
+import { REST_HEAL_PERCENT } from '../../utils/constants';
 import { CardComponent } from '../combat/CardComponent';
 
 export function RestScreen() {
@@ -99,7 +98,7 @@ export function RestScreen() {
 
       {mode === 'done' && (
         <div style={{ textAlign: 'center' }}>
-          <p style={{ fontSize: 14, color: COLORS.hp, marginBottom: 16 }}>
+          <p style={{ fontSize: 14, color: '#4ade80', marginBottom: 16 }}>
             {selectedCardId ? 'Card upgraded!' : `Healed ${healAmount} Integrity!`}
           </p>
           <button onClick={handleContinue} style={confirmBtn}>Continue</button>

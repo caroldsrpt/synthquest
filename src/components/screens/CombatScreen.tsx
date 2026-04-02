@@ -2,14 +2,14 @@ import { useCallback, useEffect } from 'react';
 import { useCombatStore } from '../../stores/combatStore';
 import { useRunStore } from '../../stores/runStore';
 import { CARDS } from '../../game/data/cards';
-import { getNextIntent, createEnemy, ENEMIES, ACT_ENCOUNTERS, ELITE_ENCOUNTERS, BOSS_ENCOUNTERS } from '../../game/data/enemies';
-import { getCardCost, getCardEffects, getCardName, generateCardRewards, createCardInstance } from '../../utils/cardUtils';
-import { COLORS, HALLUCINATION_TRIGGER_CHANCE, HALLUCINATION_SELF_DAMAGE, CONTEXT_CAP, COMBAT_GOLD_MIN, COMBAT_GOLD_MAX, ELITE_GOLD_MIN, ELITE_GOLD_MAX, BOSS_GOLD_MIN, BOSS_GOLD_MAX } from '../../utils/constants';
-import { randInt, weightedPick } from '../../utils/random';
+import { getNextIntent, ENEMIES } from '../../game/data/enemies';
+import { getCardCost, getCardEffects, getCardName, createCardInstance } from '../../utils/cardUtils';
+import { COLORS, HALLUCINATION_TRIGGER_CHANCE, HALLUCINATION_SELF_DAMAGE, CONTEXT_CAP } from '../../utils/constants';
+import { randInt } from '../../utils/random';
 import { HandDisplay } from '../combat/HandDisplay';
 import { EnemyDisplay } from '../combat/EnemyDisplay';
 import { PlayerStatus } from '../combat/PlayerStatus';
-import type { CardInstance, CardEffect, EnemyInstance, MapNodeType } from '../../game/data/types';
+import type { CardInstance, CardEffect, EnemyInstance } from '../../game/data/types';
 
 export function CombatScreen() {
   const combat = useCombatStore();
@@ -237,7 +237,7 @@ export function CombatScreen() {
     if (combat.phase !== 'playerTurn') return;
 
     // Discard hand (except retain)
-    const { CARDS: cardDefs } = require('../../game/data/cards');
+    const cardDefs = CARDS;
     const retained: CardInstance[] = [];
     const discarded: CardInstance[] = [];
     for (const card of combat.hand) {
@@ -300,7 +300,7 @@ export function CombatScreen() {
 
       // Tick enemy debuffs
       for (const enemy of useCombatStore.getState().enemies) {
-        for (const status of ['vulnerable', 'weak']) {
+        for (const status of ['vulnerable', 'weak'] as const) {
           const s = enemy.statusEffects.find((e) => e.status === status);
           if (s && s.stacks > 0) {
             combat.addEnemyStatus(enemy.id, { status, stacks: -1 });

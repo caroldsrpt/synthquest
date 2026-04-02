@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import type { CardInstance, CombatState, CombatPhase, EnemyInstance, StatusStack, CardCategory, CardDef, RelicDef } from '../game/data/types';
+import { CARDS } from '../game/data/cards';
 import { BASE_ENERGY, HAND_SIZE } from '../utils/constants';
-import { shuffle, uid } from '../utils/random';
-import { createCardInstance } from '../utils/cardUtils';
+import { shuffle } from '../utils/random';
 
 interface CombatStore extends CombatState {
   // Setup
@@ -81,7 +81,7 @@ const INITIAL_STATE: CombatState = {
 export const useCombatStore = create<CombatStore>((set, get) => ({
   ...INITIAL_STATE,
 
-  initCombat: (deck, enemies, maxEnergy = BASE_ENERGY, extraDraw = 0) => {
+  initCombat: (deck, enemies, maxEnergy = BASE_ENERGY) => {
     set({
       ...INITIAL_STATE,
       active: true,
@@ -150,7 +150,7 @@ export const useCombatStore = create<CombatStore>((set, get) => ({
   discardHand: () => {
     const state = get();
     // Keep cards with retain keyword
-    const { CARDS } = require('../game/data/cards');
+    // CARDS imported at top of file
     const retained: CardInstance[] = [];
     const discarded: CardInstance[] = [];
 

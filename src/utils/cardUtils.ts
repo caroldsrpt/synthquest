@@ -1,5 +1,5 @@
 import { CARDS, getCardPool, getStarterDeckIds } from '../game/data/cards';
-import type { CardInstance, CardDef, CardCategory, CardRarity, CardEffect } from '../game/data/types';
+import type { CardInstance, CardDef, CardRarity, CardEffect } from '../game/data/types';
 import { uid, shuffle, weightedPick } from './random';
 import { REWARD_WEIGHTS } from './constants';
 

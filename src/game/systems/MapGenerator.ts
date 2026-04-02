@@ -3,8 +3,7 @@ import { uid, randInt } from '../../utils/random';
 import { ACT_ENCOUNTERS, ELITE_ENCOUNTERS, BOSS_ENCOUNTERS } from '../data/enemies';
 import { weightedPick } from '../../utils/random';
 
-// Clean 3-lane map, 8 rows
-const ROWS = 8;
+// Clean 3-lane map
 
 export function generateMap(act: 1 | 2 | 3): MapNode[][] {
   const map: MapNode[][] = [];
