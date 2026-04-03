@@ -38,8 +38,12 @@ function getNodeLabel(node: MapNode): string {
 export function MapScreen() {
   const run = useRunStore();
 
+  // Generate map immediately if needed
   useEffect(() => {
-    if (run.map.length === 0) run.setMap(generateMap(run.act));
+    if (run.map.length === 0) {
+      const map = generateMap(run.act);
+      run.setMap(map);
+    }
   }, [run.act, run.map.length]);
 
   const canVisit = (node: MapNode): boolean => {

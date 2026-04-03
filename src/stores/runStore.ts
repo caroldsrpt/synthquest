@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { RunState, GameScreen, CardInstance, MapNode } from '../game/data/types';
+import { generateMap } from '../game/systems/MapGenerator';
 import { BASE_INTEGRITY, STARTING_GOLD, BASE_ENERGY, HAND_SIZE } from '../utils/constants';
 import { createStarterDeck } from '../utils/cardUtils';
 
@@ -79,6 +80,7 @@ export const useRunStore = create<RunStore>((set, get) => ({
       ...INITIAL_RUN,
       active: true,
       deck: createStarterDeck(),
+      map: generateMap(1),
       screen: 'map',
     });
   },
@@ -165,9 +167,10 @@ export const useRunStore = create<RunStore>((set, get) => ({
       get().endRun(true);
       return;
     }
+    const nextAct = (currentAct + 1) as 1 | 2 | 3;
     set({
-      act: (currentAct + 1) as 1 | 2 | 3,
-      map: [],
+      act: nextAct,
+      map: generateMap(nextAct),
       currentNodeId: null,
       visitedNodeIds: [],
       floor: 0,
