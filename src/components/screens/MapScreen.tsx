@@ -49,9 +49,16 @@ export function MapScreen() {
   const canVisit = (node: MapNode): boolean => {
     if (node.visited) return false;
     if (run.visitedNodeIds.length === 0) return node.row === 0;
-    return run.map.some((row) =>
-      row.some((n) => n.visited && n.connections.includes(node.id))
-    );
+
+    // StS-style: only nodes connected from the LAST visited node are available
+    // (not any visited node — that would allow branch-hopping)
+    const lastVisitedId = run.visitedNodeIds[run.visitedNodeIds.length - 1];
+    for (const row of run.map) {
+      for (const n of row) {
+        if (n.id === lastVisitedId && n.connections.includes(node.id)) return true;
+      }
+    }
+    return false;
   };
 
   const handleClick = (node: MapNode) => {

@@ -39,7 +39,7 @@ export function S1_TextGeneration({ onComplete }: { onComplete: () => void }) {
   }, [generating, wordIndex]);
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, padding: '20px 32px', overflow: 'auto', maxWidth: 600, margin: '0 auto', width: '100%' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, padding: '20px 32px', overflow: 'auto', maxWidth: 600, margin: '0 auto', width: '100%' }}>
       {/* Customer bubble */}
       <div style={{
         background: '#1e2030', borderRadius: '16px 16px 16px 4px', padding: '12px 20px',
@@ -65,7 +65,7 @@ export function S1_TextGeneration({ onComplete }: { onComplete: () => void }) {
         )}
 
         {/* Generated words */}
-        <div style={{ fontSize: 16, lineHeight: 1.8, minHeight: 50 }}>
+        <div style={{ fontSize: 16, lineHeight: 1.8, minHeight: 50, wordWrap: 'break-word', overflowWrap: 'break-word' }}>
           {WORDS.slice(0, Math.max(0, wordIndex)).map((word, i) => (
             <span key={i} style={{
               color: '#e0e0e0',
