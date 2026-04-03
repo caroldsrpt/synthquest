@@ -1,120 +1,190 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRunStore } from '../../stores/runStore';
 import { useMetaStore } from '../../stores/metaStore';
+
+const PIXEL = "'Press Start 2P', monospace";
+
+// Hard 2px pixel outline on all text for readability
+const PX_OUTLINE = [
+  '-2px -2px 0 #000', ' 2px -2px 0 #000',
+  '-2px  2px 0 #000', ' 2px  2px 0 #000',
+  ' 0   -2px 0 #000', ' 0    2px 0 #000',
+  '-2px  0   0 #000', ' 2px  0   0 #000',
+].join(', ');
 
 export function TitleScreen() {
   const startNewRun = useRunStore((s) => s.startNewRun);
   const meta = useMetaStore();
+  const [ready, setReady] = useState(false);
+  const [hovered, setHovered] = useState<string | null>(null);
 
   useEffect(() => {
     meta.load();
+    requestAnimationFrame(() => setReady(true));
   }, []);
 
   return (
-    <div
-      style={{
-        width: '100%',
-        height: '100%',
-        background: 'linear-gradient(180deg, #0f0f23 0%, #1a1a3e 40%, #2d1b4e 100%)',
+    <div style={{
+      width: '100%',
+      height: '100%',
+      position: 'relative',
+      overflow: 'hidden',
+      background: '#0c0a14',
+    }}>
+      {/* Full-screen title scene */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        backgroundImage: 'url(/sprites/title-bg.png)',
+        backgroundSize: 'contain',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        imageRendering: 'pixelated',
+        opacity: ready ? 1 : 0,
+        transition: 'opacity 1.5s ease',
+      }} />
+
+      {/* Subtle vignette for depth */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        background: 'radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.5) 100%)',
+        pointerEvents: 'none',
+      }} />
+
+      {/* ===== Title text — upper third ===== */}
+      <div style={{
+        position: 'absolute',
+        top: '8%',
+        left: 0,
+        right: 0,
+        textAlign: 'center',
+        zIndex: 1,
+        opacity: ready ? 1 : 0,
+        transform: ready ? 'none' : 'translateY(-10px)',
+        transition: 'opacity 0.8s ease 0.6s, transform 0.8s ease 0.6s',
+      }}>
+        <h1 style={{
+          fontFamily: PIXEL,
+          fontSize: 'clamp(24px, 5vw, 48px)',
+          color: '#f0e6d3',
+          textShadow: PX_OUTLINE + ', 0 0 40px rgba(168,130,255,0.5)',
+          letterSpacing: 6,
+          margin: 0,
+        }}>
+          BYTE'S BAKERY
+        </h1>
+        <p style={{
+          fontFamily: PIXEL,
+          fontSize: 'clamp(6px, 1.2vw, 10px)',
+          color: '#c4b89a',
+          textShadow: PX_OUTLINE,
+          letterSpacing: 4,
+          marginTop: 8,
+        }}>
+          A DECK-BUILDING ADVENTURE
+        </p>
+      </div>
+
+      {/* ===== Menu — bottom area ===== */}
+      <div style={{
+        position: 'absolute',
+        bottom: '8%',
+        left: 0,
+        right: 0,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
-        fontFamily: 'monospace',
-        color: '#e0e0e0',
-        border: '2px solid #333',
-        borderRadius: 4,
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Particles */}
-      <div style={{ position: 'absolute', inset: 0, opacity: 0.3 }}>
-        {Array.from({ length: 20 }).map((_, i) => (
-          <div
-            key={i}
-            style={{
-              position: 'absolute',
-              width: 4,
-              height: 4,
-              background: ['#7b68ee', '#a78bfa', '#60a5fa', '#34d399', '#f472b6'][i % 5],
-              borderRadius: '50%',
-              left: `${(i * 37) % 100}%`,
-              top: `${(i * 53) % 100}%`,
-              animation: `float ${3 + (i % 3)}s ease-in-out infinite alternate`,
-              animationDelay: `${i * 0.2}s`,
-            }}
+        gap: 12,
+        zIndex: 1,
+        opacity: ready ? 1 : 0,
+        transform: ready ? 'none' : 'translateY(10px)',
+        transition: 'opacity 0.8s ease 0.8s, transform 0.8s ease 0.8s',
+      }}>
+        {/* RPG-style panel behind buttons */}
+        <div style={{
+          background: 'rgba(12, 8, 24, 0.85)',
+          border: '3px solid #6b4fa0',
+          boxShadow: 'inset 0 0 0 2px #1a1130, inset 0 0 0 4px #3d2d5c, 0 0 0 2px #000',
+          padding: '20px 32px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 14,
+        }}>
+          <MenuButton
+            label="New Run"
+            active={hovered === 'new'}
+            onHover={(h) => setHovered(h ? 'new' : null)}
+            onClick={startNewRun}
+            primary
           />
-        ))}
-      </div>
-
-      {/* Title */}
-      <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-        <h1
-          style={{
-            fontSize: 52,
-            fontWeight: 'bold',
-            margin: 0,
-            background: 'linear-gradient(135deg, #7b68ee, #a78bfa, #60a5fa)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            letterSpacing: -1,
-          }}
-        >
-          SynthQuest
-        </h1>
-        <p style={{ fontSize: 14, color: '#9ca3af', marginTop: 4 }}>
-          Build an AI system. Save the digital world.
-        </p>
-        <p style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
-          A deck-building roguelike
-        </p>
-      </div>
-
-      {/* Buttons */}
-      <div style={{ marginTop: 48, display: 'flex', flexDirection: 'column', gap: 12, position: 'relative', zIndex: 1 }}>
-        <button onClick={startNewRun} style={buttonStyle}>
-          New Run
-        </button>
-        <button
-          onClick={() => useRunStore.getState().setScreen('knowledgeBase')}
-          style={{ ...buttonStyle, background: 'rgba(255,255,255,0.05)' }}
-        >
-          Knowledge Base ({meta.knowledgeUnlocked.length})
-        </button>
-      </div>
-
-      {/* Stats */}
-      {meta.totalRuns > 0 && (
-        <div style={{ position: 'absolute', bottom: 40, fontSize: 11, color: '#4b5563', textAlign: 'center' }}>
-          Runs: {meta.totalRuns} | Wins: {meta.wins} | Best Act: {meta.bestAct}
+          <MenuButton
+            label={`Knowledge Base${meta.knowledgeUnlocked.length > 0 ? ` (${meta.knowledgeUnlocked.length})` : ''}`}
+            active={hovered === 'kb'}
+            onHover={(h) => setHovered(h ? 'kb' : null)}
+            onClick={() => useRunStore.getState().setScreen('knowledgeBase')}
+          />
         </div>
-      )}
 
-      {/* Controls hint */}
-      <p style={{ position: 'absolute', bottom: 16, fontSize: 11, color: '#374151' }}>
-        Click cards to play | Click enemies to target
-      </p>
-
-      <style>{`
-        @keyframes float {
-          from { transform: translateY(0px) scale(1); opacity: 0.3; }
-          to { transform: translateY(-20px) scale(1.5); opacity: 0.7; }
-        }
-      `}</style>
+        {/* Run stats below panel */}
+        {meta.totalRuns > 0 && (
+          <p style={{
+            fontFamily: PIXEL,
+            fontSize: 7,
+            color: '#5a4f6a',
+            textShadow: PX_OUTLINE,
+            letterSpacing: 1,
+            marginTop: 4,
+          }}>
+            Runs: {meta.totalRuns} &bull; Wins: {meta.wins} &bull; Best Act: {meta.bestAct}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
 
-const buttonStyle: React.CSSProperties = {
-  padding: '12px 48px',
-  fontSize: 16,
-  fontFamily: 'monospace',
-  fontWeight: 'bold',
-  color: '#e0e0e0',
-  background: 'rgba(123, 104, 238, 0.2)',
-  border: '2px solid rgba(123, 104, 238, 0.5)',
-  borderRadius: 8,
-  cursor: 'pointer',
-  letterSpacing: 1,
-};
+function MenuButton({ label, active, onHover, onClick, primary }: {
+  label: string;
+  active: boolean;
+  onHover: (h: boolean) => void;
+  onClick: () => void;
+  primary?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => onHover(true)}
+      onMouseLeave={() => onHover(false)}
+      style={{
+        background: 'none',
+        border: 'none',
+        padding: '6px 12px',
+        fontFamily: PIXEL,
+        fontSize: primary ? 14 : 10,
+        color: active
+          ? '#fff'
+          : primary ? '#c4b89a' : '#8a7a66',
+        textShadow: active
+          ? PX_OUTLINE + ', 0 0 16px rgba(168,130,255,0.6)'
+          : PX_OUTLINE,
+        cursor: 'pointer',
+        transition: 'color 0.15s ease',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        letterSpacing: 2,
+      }}
+    >
+      <span style={{
+        opacity: active ? 1 : 0,
+        transition: 'opacity 0.15s ease',
+        fontSize: primary ? 10 : 8,
+      }}>
+        ▶
+      </span>
+      {label}
+    </button>
+  );
+}

@@ -1,5 +1,8 @@
 import { COLORS } from '../../utils/constants';
 
+const PIXEL = "'Press Start 2P', monospace";
+const PX_OUTLINE = '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000';
+
 interface PlayerStatusProps {
   integrity: number;
   maxIntegrity: number;
@@ -20,61 +23,72 @@ export function PlayerStatus({
   const hpColor = hpPct > 50 ? COLORS.hp : hpPct > 25 ? COLORS.hpMid : COLORS.hpLow;
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontFamily: 'monospace', padding: '8px 16px' }}>
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 16,
+      fontFamily: PIXEL,
+      padding: '14px 20px',
+      background: 'rgba(12, 8, 24, 0.92)',
+      borderTop: '3px solid #6b4fa0',
+      boxShadow: 'inset 0 2px 0 #3d2d5c, 0 -4px 12px rgba(0,0,0,0.5)',
+      position: 'relative',
+      zIndex: 3,
+    }}>
       {/* Energy orb */}
-      <div
-        style={{
-          width: 48,
-          height: 48,
-          borderRadius: '50%',
-          background: `radial-gradient(circle at 35% 35%, ${COLORS.energy}, ${COLORS.energy}88)`,
-          border: `3px solid ${COLORS.energy}`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 20,
-          fontWeight: 'bold',
-          color: '#0f0f23',
-        }}
-      >
+      <div style={{
+        width: 56,
+        height: 56,
+        background: COLORS.energy,
+        border: '3px solid #000',
+        boxShadow: `inset 0 0 0 2px ${COLORS.energy}, 0 0 8px ${COLORS.energy}44`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#0f0f23',
+        flexShrink: 0,
+      }}>
         {energy}/{maxEnergy}
       </div>
 
       {/* HP / Firewall */}
-      <div style={{ flex: 1, maxWidth: 200 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 2 }}>
-          <span style={{ color: '#e0e0e0' }}>
-            Integrity: {integrity}/{maxIntegrity}
+      <div style={{ flex: 1, maxWidth: 220 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 4 }}>
+          <span style={{ color: '#e0e0e0', textShadow: PX_OUTLINE }}>
+            HP: {integrity}/{maxIntegrity}
           </span>
           {firewall > 0 && (
-            <span style={{ color: COLORS.firewall }}>
-              {'\u26E8'} {firewall}
+            <span style={{ color: COLORS.firewall, textShadow: PX_OUTLINE }}>
+              FW: {firewall}
             </span>
           )}
         </div>
-        <div style={{ width: '100%', height: 12, background: '#1f2937', borderRadius: 6, overflow: 'hidden', border: '1px solid #374151' }}>
+        <div style={{
+          width: '100%',
+          height: 10,
+          background: '#1a1130',
+          border: '2px solid #3d2d5c',
+          overflow: 'hidden',
+          position: 'relative',
+        }}>
           {firewall > 0 && (
-            <div
-              style={{
-                position: 'absolute',
-                width: `${Math.min(100, (firewall / maxIntegrity) * 100 + hpPct)}%`,
-                height: 12,
-                background: COLORS.firewall,
-                borderRadius: 6,
-                opacity: 0.5,
-              }}
-            />
-          )}
-          <div
-            style={{
-              width: `${hpPct}%`,
+            <div style={{
+              position: 'absolute',
+              width: `${Math.min(100, (firewall / maxIntegrity) * 100 + hpPct)}%`,
               height: '100%',
-              background: hpColor,
-              borderRadius: 6,
-              transition: 'width 0.3s',
-              position: 'relative',
-            }}
-          />
+              background: COLORS.firewall,
+              opacity: 0.4,
+            }} />
+          )}
+          <div style={{
+            width: `${hpPct}%`,
+            height: '100%',
+            background: hpColor,
+            transition: 'width 0.3s',
+            position: 'relative',
+          }} />
         </div>
       </div>
 
@@ -85,11 +99,12 @@ export function PlayerStatus({
             key={s.status}
             style={{
               fontSize: 10,
-              padding: '2px 6px',
-              borderRadius: 4,
+              padding: '4px 8px',
               background: getStatusBg(s.status),
+              border: `1px solid ${getStatusFg(s.status)}44`,
               color: getStatusFg(s.status),
               fontWeight: 'bold',
+              textShadow: PX_OUTLINE,
             }}
           >
             {getStatusLabel(s.status)} {s.stacks}
@@ -98,10 +113,10 @@ export function PlayerStatus({
       </div>
 
       {/* Pile counts */}
-      <div style={{ display: 'flex', gap: 10, fontSize: 11, color: '#6b7280' }}>
-        <span title="Draw pile">Draw: {drawPileCount}</span>
-        <span title="Discard pile">Disc: {discardPileCount}</span>
-        {exhaustPileCount > 0 && <span title="Exhaust pile">Exh: {exhaustPileCount}</span>}
+      <div style={{ display: 'flex', gap: 14, fontSize: 10, color: '#6b5c7a', textShadow: PX_OUTLINE }}>
+        <span>Draw: {drawPileCount}</span>
+        <span>Disc: {discardPileCount}</span>
+        {exhaustPileCount > 0 && <span>Exh: {exhaustPileCount}</span>}
       </div>
     </div>
   );

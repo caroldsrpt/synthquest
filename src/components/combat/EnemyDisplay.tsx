@@ -2,6 +2,26 @@ import type { EnemyInstance } from '../../game/data/types';
 import { ENEMIES } from '../../game/data/enemies';
 import { COLORS } from '../../utils/constants';
 
+const PIXEL = "'Press Start 2P', monospace";
+
+const PX_OUTLINE_SM = [
+  '-1px -1px 0 #000', ' 1px -1px 0 #000',
+  '-1px  1px 0 #000', ' 1px  1px 0 #000',
+  ' 0   -1px 0 #000', ' 0    1px 0 #000',
+  '-1px  0   0 #000', ' 1px  0   0 #000',
+].join(', ');
+
+// Map enemy IDs to sprite files
+const ENEMY_SPRITES: Record<string, string> = {
+  staleCache: '/sprites/enemies/staleCache.png',
+  tokenFlood: '/sprites/enemies/tokenFlood.png',
+  theParrot: '/sprites/enemies/theParrot.png',
+  junkGenerator: '/sprites/enemies/junkGenerator.png',
+  confabulator: '/sprites/enemies/confabulator.png',
+  promptInjector: '/sprites/enemies/staleCache.png', // reuse until we generate more
+  // Act 2+3 can reuse or get their own later
+};
+
 interface EnemyDisplayProps {
   enemy: EnemyInstance;
   targeting: boolean;
@@ -16,6 +36,8 @@ export function EnemyDisplay({ enemy, targeting, onClick }: EnemyDisplayProps) {
   const isDead = enemy.hp <= 0;
   const intentIcon = getIntentIcon(enemy.currentIntent);
   const intentColor = getIntentColor(enemy.currentIntent);
+  const sprite = ENEMY_SPRITES[enemy.defId];
+  const spriteSize = def.type === 'boss' ? 320 : def.type === 'elite' ? 256 : 224;
 
   return (
     <div
@@ -28,39 +50,47 @@ export function EnemyDisplay({ enemy, targeting, onClick }: EnemyDisplayProps) {
         cursor: targeting && !isDead ? 'crosshair' : 'default',
         opacity: isDead ? 0.3 : 1,
         transition: 'all 0.2s',
-        transform: targeting && !isDead ? 'scale(1.05)' : 'none',
-        filter: targeting && !isDead ? `drop-shadow(0 0 8px ${COLORS.accent})` : 'none',
-        minWidth: 90,
+        transform: targeting && !isDead ? 'scale(1.08)' : 'none',
+        filter: targeting && !isDead ? `drop-shadow(0 0 12px #fff)` : 'none',
+        minWidth: 100,
       }}
     >
       {/* Intent */}
       {!isDead && (
-        <div
-          style={{
-            fontSize: 12,
-            padding: '3px 8px',
-            borderRadius: 4,
-            background: `${intentColor}22`,
-            border: `1px solid ${intentColor}44`,
-            color: intentColor,
-            fontFamily: 'monospace',
-            fontWeight: 'bold',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 4,
-          }}
-        >
+        <div style={{
+          fontFamily: PIXEL,
+          fontSize: 12,
+          padding: '6px 12px',
+          background: `${intentColor}22`,
+          border: `2px solid ${intentColor}44`,
+          color: intentColor,
+          fontWeight: 'bold',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 4,
+          textShadow: PX_OUTLINE_SM,
+        }}>
           <span>{intentIcon}</span>
           <span>{getIntentText(enemy.currentIntent)}</span>
         </div>
       )}
 
-      {/* Enemy body */}
-      <div
-        style={{
-          width: 64,
-          height: 64,
-          borderRadius: def.type === 'boss' ? 8 : '50%',
+      {/* Enemy sprite */}
+      {sprite ? (
+        <img
+          src={sprite}
+          alt={def.name}
+          style={{
+            width: spriteSize,
+            height: spriteSize,
+            imageRendering: 'pixelated',
+            animation: isDead ? 'none' : 'enemyIdle 2s ease-in-out infinite',
+          }}
+        />
+      ) : (
+        <div style={{
+          width: spriteSize,
+          height: spriteSize,
           background: def.type === 'boss'
             ? 'linear-gradient(135deg, #7c3aed, #dc2626)'
             : def.type === 'elite'
@@ -69,40 +99,65 @@ export function EnemyDisplay({ enemy, targeting, onClick }: EnemyDisplayProps) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: def.type === 'boss' ? 24 : 18,
+          fontSize: 24,
           fontWeight: 'bold',
           color: '#fff',
-          fontFamily: 'monospace',
-          border: `2px solid ${targeting && !isDead ? '#fff' : 'transparent'}`,
-        }}
-      >
-        {def.name.slice(0, 2).toUpperCase()}
-      </div>
+          fontFamily: PIXEL,
+          border: `2px solid ${targeting && !isDead ? '#fff' : '#333'}`,
+        }}>
+          {def.name.slice(0, 2).toUpperCase()}
+        </div>
+      )}
 
       {/* Name */}
-      <div style={{ fontSize: 11, fontWeight: 'bold', color: '#e0e0e0', fontFamily: 'monospace', textAlign: 'center' }}>
+      <div style={{
+        fontFamily: PIXEL,
+        fontSize: 12,
+        fontWeight: 'bold',
+        color: def.type === 'boss' ? '#ef4444' : def.type === 'elite' ? '#f59e0b' : '#c4b89a',
+        textShadow: PX_OUTLINE_SM,
+        textAlign: 'center',
+        letterSpacing: 0.5,
+      }}>
         {def.name}
       </div>
 
       {/* HP bar */}
-      <div style={{ width: 80 }}>
+      <div style={{ width: 160 }}>
         {enemy.firewall > 0 && (
-          <div style={{ fontSize: 10, color: COLORS.firewall, textAlign: 'center', marginBottom: 2, fontFamily: 'monospace' }}>
-            {'\u26E8'} {enemy.firewall}
+          <div style={{
+            fontFamily: PIXEL,
+            fontSize: 10,
+            color: COLORS.firewall,
+            textAlign: 'center',
+            marginBottom: 2,
+            textShadow: PX_OUTLINE_SM,
+          }}>
+            FW {enemy.firewall}
           </div>
         )}
-        <div style={{ width: '100%', height: 8, background: '#1f2937', borderRadius: 4, overflow: 'hidden', border: '1px solid #374151' }}>
-          <div
-            style={{
-              width: `${hpPct}%`,
-              height: '100%',
-              background: hpPct > 50 ? COLORS.hp : hpPct > 25 ? COLORS.hpMid : COLORS.hpLow,
-              borderRadius: 4,
-              transition: 'width 0.3s',
-            }}
-          />
+        <div style={{
+          width: '100%',
+          height: 8,
+          background: '#1a1130',
+          border: '2px solid #3d2d5c',
+          overflow: 'hidden',
+        }}>
+          <div style={{
+            width: `${hpPct}%`,
+            height: '100%',
+            background: hpPct > 50 ? '#4ade80' : hpPct > 25 ? '#fbbf24' : '#ef4444',
+            transition: 'width 0.3s',
+          }} />
         </div>
-        <div style={{ fontSize: 10, color: '#6b7280', textAlign: 'center', marginTop: 1, fontFamily: 'monospace' }}>
+        <div style={{
+          fontFamily: PIXEL,
+          fontSize: 10,
+          color: '#6b5c7a',
+          textAlign: 'center',
+          marginTop: 1,
+          textShadow: PX_OUTLINE_SM,
+        }}>
           {enemy.hp}/{enemy.maxHp}
         </div>
       </div>
@@ -114,13 +169,14 @@ export function EnemyDisplay({ enemy, targeting, onClick }: EnemyDisplayProps) {
             <span
               key={s.status}
               style={{
-                fontSize: 9,
-                padding: '1px 4px',
-                borderRadius: 3,
+                fontFamily: PIXEL,
+                fontSize: 10,
+                padding: '3px 6px',
                 background: getStatusColor(s.status) + '33',
+                border: `1px solid ${getStatusColor(s.status)}44`,
                 color: getStatusColor(s.status),
-                fontFamily: 'monospace',
                 fontWeight: 'bold',
+                textShadow: PX_OUTLINE_SM,
               }}
             >
               {s.status.slice(0, 3).toUpperCase()} {s.stacks}
@@ -128,6 +184,13 @@ export function EnemyDisplay({ enemy, targeting, onClick }: EnemyDisplayProps) {
           ))}
         </div>
       )}
+
+      <style>{`
+        @keyframes enemyIdle {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-4px); }
+        }
+      `}</style>
     </div>
   );
 }

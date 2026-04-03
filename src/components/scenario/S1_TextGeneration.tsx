@@ -45,7 +45,7 @@ export function S1_TextGeneration({ onComplete }: { onComplete: () => void }) {
 
     timer.current = window.setTimeout(() => {
       setWordIndex((i) => i + 1);
-    }, 500);
+    }, 900);
     return () => clearTimeout(timer.current);
   }, [phase, wordIndex, showingProbs, pausedAtWord]);
 
@@ -66,13 +66,17 @@ export function S1_TextGeneration({ onComplete }: { onComplete: () => void }) {
             Welcome to Byte's Bakery!
           </h2>
           <p style={{ fontSize: 14, color: '#9ca3af', lineHeight: 1.7, maxWidth: 450 }}>
-            The bakery needs an AI assistant to help answer customer questions.
-            But before we build one, let's understand how AI actually works.
+            The bakery needs an AI assistant to help answer customer questions —
+            something like <strong style={{ color: '#a78bfa' }}>ChatGPT</strong>,{' '}
+            <strong style={{ color: '#a78bfa' }}>Claude</strong>, or{' '}
+            <strong style={{ color: '#a78bfa' }}>Gemini</strong>.
+            But before we build one, let's understand how they actually work.
           </p>
           <p style={{ fontSize: 13, color: '#7b68ee', lineHeight: 1.7, maxWidth: 450 }}>
-            Here's the key thing: <strong>AI doesn't "know" anything.</strong> It predicts
+            These are all <strong>Large Language Models (LLMs)</strong>.
+            Here's the key thing: they don't "know" anything. They predict
             the most likely next word, one word at a time — like autocomplete on your phone,
-            but much more powerful.
+            but trained on billions of pages of text.
           </p>
           <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.7, maxWidth: 450 }}>
             Let's see it in action. A customer is about to ask a question.
@@ -101,15 +105,15 @@ export function S1_TextGeneration({ onComplete }: { onComplete: () => void }) {
               {'\uD83E\uDD16'} AI is generating a response word by word:
             </div>
 
-            <div style={{ fontSize: 16, lineHeight: 2, minHeight: 30, wordWrap: 'break-word' }}>
+            <div style={{ fontSize: 16, lineHeight: 2, minHeight: 30 }}>
               {WORDS.slice(0, Math.max(0, wordIndex)).map((word, i) => (
                 <span key={i} style={{
                   color: '#e0e0e0',
-                  marginRight: 6,
+                  display: 'inline',
                   background: i === wordIndex - 1 ? '#7b68ee33' : 'transparent',
                   padding: '2px 4px', borderRadius: 4,
                 }}>
-                  {word}
+                  {word}{' '}
                 </span>
               ))}
               {phase === 'generate' && (
@@ -118,14 +122,14 @@ export function S1_TextGeneration({ onComplete }: { onComplete: () => void }) {
             </div>
           </div>
 
-          {/* Probability picker (paused) */}
-          {showingProbs && wordIndex < PROBS.length && (
+          {/* Probability picker — stays visible once generation starts */}
+          {phase === 'generate' && wordIndex >= 0 && wordIndex < PROBS.length && (
             <div style={{
               background: '#1a1a2e', border: '2px solid #fbbf2444', borderRadius: 12,
               padding: 16, width: '100%',
             }}>
               <div style={{ fontSize: 12, color: '#fbbf24', marginBottom: 8, fontWeight: 'bold' }}>
-                {'\u{1F914}'} Which word should come next?
+                {showingProbs ? '\u{1F914} Which word should come next?' : '\u{1F914} Predicting next word...'}
               </div>
               <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 10 }}>
                 The AI calculates probabilities for every possible next word, then picks one:
@@ -143,6 +147,7 @@ export function S1_TextGeneration({ onComplete }: { onComplete: () => void }) {
                       background: i === 0 ? '#7b68ee' : i === 1 ? '#4b556366' : '#2d2d5e44',
                       display: 'flex', alignItems: 'center', paddingLeft: 10,
                       fontSize: 13, color: '#fff', fontWeight: i === 0 ? 'bold' : 'normal',
+                      transition: 'width 0.3s ease',
                     }}>
                       "{p.word}"
                     </div>
@@ -156,9 +161,11 @@ export function S1_TextGeneration({ onComplete }: { onComplete: () => void }) {
                 It picks "{PROBS[wordIndex][0].word}" because it's the most likely.
                 {wordIndex === 2 && ' Notice "dragon" has an 8% chance — the AI doesn\'t know what\'s real!'}
               </div>
-              <button onClick={handlePickWord} style={{ ...btnSmall, marginTop: 10 }}>
-                Pick the top word and continue {'\u2192'}
-              </button>
+              {showingProbs && (
+                <button onClick={handlePickWord} style={{ ...btnSmall, marginTop: 10 }}>
+                  Pick the top word and continue {'\u2192'}
+                </button>
+              )}
             </div>
           )}
         </>

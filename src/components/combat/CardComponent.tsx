@@ -3,6 +3,21 @@ import { CARDS } from '../../game/data/cards';
 import { getCardCost, getCardName, getCardDescription } from '../../utils/cardUtils';
 import { COLORS } from '../../utils/constants';
 
+const CATEGORY_ART: Record<string, string> = {
+  text: '/sprites/card-text.png',
+  structure: '/sprites/card-structure.png',
+  logic: '/sprites/card-logic.png',
+  vision: '/sprites/card-vision.png',
+  noise: '/sprites/card-noise.png',
+};
+
+const PX_OUTLINE_SM = [
+  '-1px -1px 0 #000', ' 1px -1px 0 #000',
+  '-1px  1px 0 #000', ' 1px  1px 0 #000',
+  ' 0   -1px 0 #000', ' 0    1px 0 #000',
+  '-1px  0   0 #000', ' 1px  0   0 #000',
+].join(', ');
+
 interface CardComponentProps {
   card: CardInstance;
   index: number;
@@ -21,8 +36,9 @@ export function CardComponent({ card, index, selected, playable, onClick, small 
   const desc = getCardDescription(card);
   const catColor = COLORS.categories[def.category] || '#888';
   const rarityColor = COLORS.rarity[def.rarity] || '#fff';
-  const w = small ? 120 : 150;
-  const h = small ? 170 : 210;
+  const w = small ? 130 : 160;
+  const h = small ? 185 : 230;
+  const artSrc = CATEGORY_ART[def.category];
 
   return (
     <div
@@ -30,124 +46,132 @@ export function CardComponent({ card, index, selected, playable, onClick, small 
       style={{
         width: w,
         height: h,
-        borderRadius: 8,
-        border: `2px solid ${selected ? '#fff' : playable ? catColor : '#374151'}`,
-        background: selected
-          ? `linear-gradient(180deg, ${catColor}33 0%, ${catColor}11 100%)`
+        border: `3px solid ${selected ? '#fff' : playable ? catColor : '#2a2540'}`,
+        boxShadow: selected
+          ? `0 0 16px ${catColor}66, inset 0 0 12px ${catColor}22`
           : playable
-          ? `linear-gradient(180deg, #1a1a3e 0%, #0f0f23 100%)`
-          : '#0a0a15',
+          ? `inset 0 0 0 1px ${catColor}33`
+          : 'none',
+        background: '#0c0a14',
         cursor: playable ? 'pointer' : 'default',
-        fontFamily: 'monospace',
         color: playable ? '#e0e0e0' : '#4b5563',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
         transition: 'all 0.15s',
         transform: selected ? 'translateY(-12px) scale(1.05)' : 'none',
-        boxShadow: selected ? `0 8px 24px ${catColor}44` : 'none',
         flexShrink: 0,
         opacity: playable ? 1 : 0.6,
         position: 'relative',
       }}
     >
       {/* Cost orb */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 6,
-          left: 6,
-          width: 24,
-          height: 24,
-          borderRadius: '50%',
-          background: COLORS.energy,
-          color: '#0f0f23',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 13,
-          fontWeight: 'bold',
-        }}
-      >
+      <div style={{
+        position: 'absolute',
+        top: 4,
+        left: 4,
+        width: 26,
+        height: 26,
+        background: COLORS.energy,
+        color: '#0f0f23',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 13,
+        fontWeight: 'bold',
+        fontFamily: "'Press Start 2P', monospace",
+        border: '2px solid #000',
+        zIndex: 2,
+      }}>
         {cost}
       </div>
 
-      {/* Category badge */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 6,
-          right: 6,
-          fontSize: 9,
-          padding: '2px 6px',
-          borderRadius: 3,
-          background: `${catColor}33`,
-          color: catColor,
-          textTransform: 'uppercase',
-          fontWeight: 'bold',
-        }}
-      >
-        {def.category}
+      {/* Card art area */}
+      <div style={{
+        height: small ? 55 : 70,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderBottom: `2px solid ${catColor}44`,
+        background: `linear-gradient(180deg, ${catColor}15 0%, transparent 100%)`,
+        overflow: 'hidden',
+        position: 'relative',
+      }}>
+        {artSrc && (
+          <img
+            src={artSrc}
+            alt={def.category}
+            style={{
+              width: small ? 48 : 56,
+              height: small ? 48 : 56,
+              imageRendering: 'pixelated',
+              mixBlendMode: 'screen',
+              opacity: 0.9,
+            }}
+          />
+        )}
       </div>
 
-      {/* Card icon area */}
-      <div
-        style={{
-          height: small ? 50 : 65,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderBottom: `1px solid ${catColor}33`,
-          fontSize: small ? 20 : 28,
-        }}
-      >
-        {getCategoryIcon(def.category)}
+      {/* Type tag */}
+      <div style={{
+        padding: '4px 0',
+        fontSize: 8,
+        fontFamily: "'Press Start 2P', monospace",
+        textAlign: 'center',
+        color: def.target === 'self' ? '#60a5fa' : def.target === 'allEnemies' ? '#f472b6' : def.target === 'none' ? '#fbbf24' : '#ef4444',
+        letterSpacing: 1,
+        textTransform: 'uppercase',
+        textShadow: PX_OUTLINE_SM,
+      }}>
+        {def.target === 'self' ? 'DEFEND' : def.target === 'allEnemies' ? 'AOE' : def.target === 'none' ? 'UTILITY' : 'ATTACK'}
       </div>
 
       {/* Name */}
-      <div
-        style={{
-          padding: '6px 8px 2px',
-          fontSize: small ? 11 : 12,
-          fontWeight: 'bold',
-          textAlign: 'center',
-          color: card.upgraded ? COLORS.rarity.rare : '#e0e0e0',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-        }}
-      >
+      <div style={{
+        padding: '2px 8px 3px',
+        fontSize: small ? 10 : 11,
+        fontFamily: "'Press Start 2P', monospace",
+        fontWeight: 'bold',
+        textAlign: 'center',
+        color: card.upgraded ? COLORS.rarity.rare : '#e0e0e0',
+        textShadow: PX_OUTLINE_SM,
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        letterSpacing: 0.5,
+      }}>
         {name}
       </div>
 
       {/* Description */}
-      <div
-        style={{
-          flex: 1,
-          padding: '2px 8px 6px',
-          fontSize: small ? 9 : 10,
-          color: '#9ca3af',
-          lineHeight: 1.4,
-          textAlign: 'center',
-          overflow: 'hidden',
-        }}
-      >
+      <div style={{
+        flex: 1,
+        padding: '4px 10px 8px',
+        fontSize: small ? 10 : 12,
+        fontFamily: 'monospace',
+        color: '#9ca3af',
+        lineHeight: 1.4,
+        textAlign: 'center',
+        overflow: 'hidden',
+      }}>
         {desc}
       </div>
 
       {/* Keywords */}
       {def.keywords && def.keywords.length > 0 && (
-        <div style={{ padding: '0 8px 4px', display: 'flex', gap: 4, justifyContent: 'center' }}>
+        <div style={{ padding: '0 6px 3px', display: 'flex', gap: 3, justifyContent: 'center' }}>
           {def.keywords.filter((k) => k !== 'autoplay').map((kw) => (
             <span
               key={kw}
               style={{
                 fontSize: 8,
-                padding: '1px 4px',
-                borderRadius: 2,
-                background: 'rgba(255,255,255,0.1)',
-                color: '#6b7280',
+                fontFamily: "'Press Start 2P', monospace",
+                padding: '2px 5px',
+                background: `${catColor}22`,
+                border: `1px solid ${catColor}44`,
+                color: catColor,
                 textTransform: 'uppercase',
+                letterSpacing: 0.5,
               }}
             >
               {kw}
@@ -156,19 +180,8 @@ export function CardComponent({ card, index, selected, playable, onClick, small 
         </div>
       )}
 
-      {/* Rarity indicator */}
-      <div style={{ height: 2, background: rarityColor, opacity: 0.6 }} />
+      {/* Rarity bar */}
+      <div style={{ height: 3, background: rarityColor, opacity: 0.7 }} />
     </div>
   );
-}
-
-function getCategoryIcon(cat: string): string {
-  switch (cat) {
-    case 'text': return '\u270E'; // pencil
-    case 'structure': return '\u26E8'; // shield
-    case 'logic': return '\u2699'; // gear
-    case 'vision': return '\u25C9'; // eye
-    case 'noise': return '\u2604'; // comet
-    default: return '\u2726';
-  }
 }

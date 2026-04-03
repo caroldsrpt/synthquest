@@ -344,81 +344,80 @@ export function CombatScreen() {
   return (
     <div style={{
       width: '100%', height: '100%',
-      background: 'linear-gradient(180deg, #1e1b4b 0%, #0f0f23 100%)',
+      background: '#08060e',
       display: 'flex', flexDirection: 'column',
-      fontFamily: 'monospace', color: '#e0e0e0',
+      fontFamily: "'Press Start 2P', monospace", color: '#e0e0e0',
       position: 'relative', overflow: 'hidden',
     }}>
+      {/* Combat background */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        backgroundImage: 'url(/sprites/combat-bg.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        imageRendering: 'pixelated',
+        opacity: 0.35,
+      }} />
+      {/* Darken bottom for cards readability */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        background: 'linear-gradient(to bottom, transparent 50%, rgba(8,6,14,0.8) 75%, #08060e 100%)',
+        pointerEvents: 'none',
+      }} />
+
       {/* Header */}
       <div style={{
-        padding: '8px 20px', fontSize: 12,
+        position: 'relative', zIndex: 2,
+        padding: '12px 20px', fontSize: 12,
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        borderBottom: '1px solid #2d2d5e', background: 'rgba(0,0,0,0.3)',
+        background: 'rgba(12, 8, 24, 0.9)',
+        borderBottom: '3px solid #6b4fa0',
+        boxShadow: 'inset 0 -2px 0 #3d2d5c',
+        letterSpacing: 1,
       }}>
-        <span style={{ color: '#7b68ee' }}>Act {run.act} | Turn {combat.turn}</span>
-        <span style={{ color: '#6b7280' }}>{combat.log[combat.log.length - 1] || ''}</span>
+        <span style={{ color: '#c4b89a' }}>Act {run.act} | Turn {combat.turn}</span>
+        <span style={{ color: '#8a7a66', fontSize: 11 }}>{combat.log[combat.log.length - 1] || ''}</span>
       </div>
 
       {/* Battle area: player left, enemies right */}
       <div
         style={{
-          flex: 1, display: 'flex', alignItems: 'center',
-          padding: '24px 40px', position: 'relative',
+          flex: 1, display: 'flex', alignItems: 'flex-end',
+          justifyContent: 'center',
+          padding: '0 0 24px',
+          position: 'relative',
         }}
         onClick={() => isTargeting && combat.setTargeting(null)}
       >
-        {/* Player character */}
+        {/* Player character — Byte */}
         <div style={{
-          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-          marginRight: 'auto', minWidth: 100,
+          position: 'absolute',
+          left: '18%',
+          bottom: '10%',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+          zIndex: 2,
         }}>
-          <div style={{
-            width: 72, height: 72, borderRadius: '50%',
-            background: 'radial-gradient(circle at 35% 35%, #7b68ee, #7b68ee88)',
-            border: `3px solid #7b68ee`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 28, boxShadow: '0 0 20px #7b68ee44',
-          }}>
-            {'\uD83E\uDDD1\u200D\uD83D\uDCBB'}
-          </div>
-          <div style={{ fontSize: 11, fontWeight: 'bold', color: '#7b68ee' }}>You</div>
-          <div style={{ fontSize: 10, color: '#6b7280' }}>
-            {run.currentIntegrity}/{run.maxIntegrity} HP
-          </div>
-          {combat.playerFirewall > 0 && (
-            <div style={{ fontSize: 10, color: '#60a5fa' }}>
-              {'\u26E8\uFE0F'} {combat.playerFirewall} FW
-            </div>
-          )}
-          {/* Player status effects */}
-          {combat.playerStatus.length > 0 && (
-            <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 100 }}>
-              {combat.playerStatus.map((s) => (
-                <span key={s.status} style={{
-                  fontSize: 8, padding: '1px 4px', borderRadius: 3,
-                  background: s.status === 'grounded' ? '#05966933' : s.status === 'context' ? '#fbbf2433' : '#7c3aed33',
-                  color: s.status === 'grounded' ? '#10b981' : s.status === 'context' ? '#fbbf24' : '#a78bfa',
-                  fontWeight: 'bold',
-                }}>
-                  {s.status.slice(0, 3).toUpperCase()} {s.stacks}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* VS divider */}
-        <div style={{
-          fontSize: 16, color: '#374151', fontWeight: 'bold', margin: '0 24px',
-          alignSelf: 'center',
-        }}>
-          VS
+          <img
+            src="/sprites/byte.png"
+            alt="Byte"
+            style={{
+              width: 320,
+              height: 320,
+              imageRendering: 'pixelated',
+              animation: 'byteIdle 3s ease-in-out infinite',
+            }}
+          />
         </div>
 
         {/* Enemies */}
         <div style={{
-          display: 'flex', gap: 24, alignItems: 'center',
-          marginLeft: 'auto',
+          position: 'absolute',
+          right: '12%',
+          bottom: '10%',
+          display: 'flex', gap: 32, alignItems: 'flex-end',
+          zIndex: 2,
         }}>
           {combat.enemies.map((enemy) => (
             <EnemyDisplay
@@ -515,11 +514,11 @@ export function CombatScreen() {
           style={{
             position: 'absolute', right: 20, bottom: 240,
             padding: '12px 24px',
-            background: 'linear-gradient(135deg, #7b68ee44, #7b68ee22)',
-            border: '2px solid #7b68ee',
-            borderRadius: 8,
-            color: '#e0e0e0', fontFamily: 'monospace', fontWeight: 'bold',
-            fontSize: 14, cursor: 'pointer', letterSpacing: 1,
+            background: 'rgba(12, 8, 24, 0.85)',
+            border: '3px solid #6b4fa0',
+            boxShadow: 'inset 0 0 0 2px #1a1130, inset 0 0 0 4px #3d2d5c, 0 0 12px rgba(107,79,160,0.3)',
+            color: '#c4b89a', fontFamily: "'Press Start 2P', monospace",
+            fontSize: 10, cursor: 'pointer', letterSpacing: 2,
             zIndex: 10,
           }}
         >
@@ -531,18 +530,29 @@ export function CombatScreen() {
       {isTargeting && (
         <div style={{
           position: 'absolute', top: 50, left: '50%', transform: 'translateX(-50%)',
-          padding: '6px 16px', background: '#7b68eecc', borderRadius: 6,
-          fontSize: 12, color: '#fff', fontWeight: 'bold', zIndex: 30,
+          padding: '6px 16px',
+          background: 'rgba(12, 8, 24, 0.9)',
+          border: '2px solid #a882ff',
+          fontFamily: "'Press Start 2P', monospace",
+          fontSize: 8, color: '#a882ff', fontWeight: 'bold', zIndex: 30,
+          letterSpacing: 1,
         }}>
-          Click an enemy to target | Click elsewhere to cancel
+          Click enemy to target | Click elsewhere to cancel
         </div>
       )}
+
+      <style>{`
+        @keyframes byteIdle {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-5px); }
+        }
+      `}</style>
     </div>
   );
 }
 
 const btnStyle: React.CSSProperties = {
-  padding: '10px 32px', background: '#7b68ee33', border: '2px solid #7b68ee',
-  borderRadius: 8, color: '#e0e0e0', fontFamily: 'monospace', fontWeight: 'bold',
-  fontSize: 14, cursor: 'pointer',
+  padding: '10px 32px', background: 'rgba(12,8,24,0.85)', border: '3px solid #6b4fa0',
+  color: '#c4b89a', fontFamily: "'Press Start 2P', monospace",
+  fontSize: 10, cursor: 'pointer', letterSpacing: 1,
 };
