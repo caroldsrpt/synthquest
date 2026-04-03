@@ -359,22 +359,76 @@ export function CombatScreen() {
         <span style={{ color: '#6b7280' }}>{combat.log[combat.log.length - 1] || ''}</span>
       </div>
 
-      {/* Enemy area */}
+      {/* Battle area: player left, enemies right */}
       <div
         style={{
-          flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center',
-          gap: 32, padding: 24, position: 'relative',
+          flex: 1, display: 'flex', alignItems: 'center',
+          padding: '24px 40px', position: 'relative',
         }}
         onClick={() => isTargeting && combat.setTargeting(null)}
       >
-        {combat.enemies.map((enemy) => (
-          <EnemyDisplay
-            key={enemy.id}
-            enemy={enemy}
-            targeting={isTargeting}
-            onClick={handleTargetEnemy}
-          />
-        ))}
+        {/* Player character */}
+        <div style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+          marginRight: 'auto', minWidth: 100,
+        }}>
+          <div style={{
+            width: 72, height: 72, borderRadius: '50%',
+            background: 'radial-gradient(circle at 35% 35%, #7b68ee, #7b68ee88)',
+            border: `3px solid #7b68ee`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 28, boxShadow: '0 0 20px #7b68ee44',
+          }}>
+            {'\uD83E\uDDD1\u200D\uD83D\uDCBB'}
+          </div>
+          <div style={{ fontSize: 11, fontWeight: 'bold', color: '#7b68ee' }}>You</div>
+          <div style={{ fontSize: 10, color: '#6b7280' }}>
+            {run.currentIntegrity}/{run.maxIntegrity} HP
+          </div>
+          {combat.playerFirewall > 0 && (
+            <div style={{ fontSize: 10, color: '#60a5fa' }}>
+              {'\u26E8\uFE0F'} {combat.playerFirewall} FW
+            </div>
+          )}
+          {/* Player status effects */}
+          {combat.playerStatus.length > 0 && (
+            <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 100 }}>
+              {combat.playerStatus.map((s) => (
+                <span key={s.status} style={{
+                  fontSize: 8, padding: '1px 4px', borderRadius: 3,
+                  background: s.status === 'grounded' ? '#05966933' : s.status === 'context' ? '#fbbf2433' : '#7c3aed33',
+                  color: s.status === 'grounded' ? '#10b981' : s.status === 'context' ? '#fbbf24' : '#a78bfa',
+                  fontWeight: 'bold',
+                }}>
+                  {s.status.slice(0, 3).toUpperCase()} {s.stacks}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* VS divider */}
+        <div style={{
+          fontSize: 16, color: '#374151', fontWeight: 'bold', margin: '0 24px',
+          alignSelf: 'center',
+        }}>
+          VS
+        </div>
+
+        {/* Enemies */}
+        <div style={{
+          display: 'flex', gap: 24, alignItems: 'center',
+          marginLeft: 'auto',
+        }}>
+          {combat.enemies.map((enemy) => (
+            <EnemyDisplay
+              key={enemy.id}
+              enemy={enemy}
+              targeting={isTargeting}
+              onClick={handleTargetEnemy}
+            />
+          ))}
+        </div>
 
         {/* Center message overlay */}
         {message && (
