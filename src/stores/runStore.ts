@@ -156,6 +156,9 @@ export const useRunStore = create<RunStore>((set, get) => ({
     set((s) => ({
       visitedNodeIds: [...s.visitedNodeIds, nodeId],
       floor: s.floor + 1,
+      map: s.map.map((row) =>
+        row.map((node) => node.id === nodeId ? { ...node, visited: true } : node)
+      ),
     }));
   },
 

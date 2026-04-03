@@ -39,7 +39,7 @@ export function S1_TextGeneration({ onComplete }: { onComplete: () => void }) {
   }, [generating, wordIndex]);
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, padding: '20px 32px', overflow: 'auto' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, padding: '20px 32px', overflow: 'auto', maxWidth: 600, margin: '0 auto', width: '100%' }}>
       {/* Customer bubble */}
       <div style={{
         background: '#1e2030', borderRadius: '16px 16px 16px 4px', padding: '12px 20px',
