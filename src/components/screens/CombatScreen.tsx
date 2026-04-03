@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useCombatStore } from '../../stores/combatStore';
 import { useRunStore } from '../../stores/runStore';
 import { CARDS } from '../../game/data/cards';
@@ -15,6 +15,55 @@ export function CombatScreen() {
   const combat = useCombatStore();
   const run = useRunStore();
   const [message, setMessage] = useState<string | null>(null);
+  type BytePose = 'idle' | 'attack' | 'hurt' | 'defend' | 'debuffed';
+  const [bytePose, setBytePose] = useState<BytePose>('idle');
+  const [enemyHit, setEnemyHit] = useState<string | null>(null);
+  const [floats, setFloats] = useState<{ target: 'player' | string; text: string; color: string; id: number }[]>([]);
+  const floatIdRef = useRef(0);
+
+  const addFloat = (target: 'player' | string, text: string, color: string) => {
+    floatIdRef.current++;
+    const f = { target, text, color, id: floatIdRef.current };
+    setFloats((prev) => [...prev, f]);
+    setTimeout(() => setFloats((prev) => prev.filter((x) => x.id !== f.id)), 900);
+  };
+
+  const showPlayerHit = (dmg: number) => {
+    setBytePose('hurt');
+    addFloat('player', `-${dmg}`, '#ef4444');
+    setTimeout(() => setBytePose('idle'), 600);
+  };
+
+  const showPlayerDebuffed = (name: string) => {
+    setBytePose('debuffed');
+    addFloat('player', `+${name}`, '#a78bfa');
+    setTimeout(() => setBytePose('idle'), 600);
+  };
+
+  const showPlayerDefend = (amount: number) => {
+    setBytePose('defend');
+    addFloat('player', `+${amount} FW`, '#60a5fa');
+    setTimeout(() => setBytePose('idle'), 600);
+  };
+
+  const showEnemyHit = (enemyId: string, dmg: number) => {
+    setEnemyHit(enemyId);
+    addFloat(enemyId, `-${dmg}`, '#ef4444');
+    setTimeout(() => setEnemyHit(null), 400);
+  };
+
+  const showPlayerAttack = () => {
+    setBytePose('attack');
+    setTimeout(() => setBytePose('idle'), 400);
+  };
+
+  const BYTE_SPRITES: Record<BytePose, string> = {
+    idle: '/sprites/byte.png',
+    attack: '/sprites/byte-attack.png',
+    hurt: '/sprites/byte-hurt.png',
+    defend: '/sprites/byte-defend.png',
+    debuffed: '/sprites/byte-hurt.png',
+  };
 
   // Auto-start first turn
   useEffect(() => {
@@ -104,7 +153,9 @@ export function CombatScreen() {
         if (enemy?.statusEffects.some((s) => s.status === 'vulnerable')) dmg = Math.floor(dmg * 1.5);
         if (state.playerStatus.some((s) => s.status === 'weak')) dmg = Math.floor(dmg * 0.75);
         const times = effect.times || 1;
+        showPlayerAttack();
         for (let i = 0; i < times; i++) combat.damageEnemy(target, dmg);
+        showEnemyHit(target, dmg * times);
         break;
       }
       case 'damageRandom': {
@@ -112,15 +163,21 @@ export function CombatScreen() {
         if (!target) break;
         const dmg = randInt(effect.min, effect.max) + contextBonus;
         consumeContext = true;
+        showPlayerAttack();
         combat.damageEnemy(target, dmg);
+        showEnemyHit(target, dmg);
         break;
       }
       case 'damageAll': {
         let dmg = effect.amount + contextBonus;
         consumeContext = true;
         if (state.playerStatus.some((s) => s.status === 'weak')) dmg = Math.floor(dmg * 0.75);
+        showPlayerAttack();
         for (const enemy of state.enemies) {
-          if (enemy.hp > 0) combat.damageEnemy(enemy.id, dmg);
+          if (enemy.hp > 0) {
+            combat.damageEnemy(enemy.id, dmg);
+            showEnemyHit(enemy.id, dmg);
+          }
         }
         break;
       }
@@ -134,11 +191,13 @@ export function CombatScreen() {
       }
       case 'firewall':
         combat.gainFirewall(effect.amount + contextBonus);
+        showPlayerDefend(effect.amount + contextBonus);
         consumeContext = true;
         break;
       case 'firewallFromMissingHp': {
         const missing = run.maxIntegrity - run.currentIntegrity;
         combat.gainFirewall(missing + contextBonus);
+        showPlayerDefend(missing + contextBonus);
         consumeContext = true;
         break;
       }
@@ -240,12 +299,12 @@ export function CombatScreen() {
     combat.setPhase('enemyTurn');
     setMessage('Enemy turn...');
 
-    await new Promise((r) => setTimeout(r, 500));
+    await new Promise((r) => setTimeout(r, 800));
 
     // Execute enemy intents
     for (const enemy of useCombatStore.getState().enemies.filter((e) => e.hp > 0)) {
       executeEnemyIntent(enemy);
-      await new Promise((r) => setTimeout(r, 300));
+      await new Promise((r) => setTimeout(r, 1200));
     }
 
     // Advance enemy intents
@@ -300,8 +359,11 @@ export function CombatScreen() {
       case 'attack': {
         let dmg = intent.damage;
         if (enemy.statusEffects.some((s) => s.status === 'weak')) dmg = Math.floor(dmg * 0.75);
+        setEnemyHit(enemy.id); // enemy lunges
+        setTimeout(() => setEnemyHit(null), 300);
         const actual = combat.takeDamage(dmg);
         run.takeDamage(actual);
+        showPlayerHit(actual);
         setMessage(`${name} attacks for ${dmg}!`);
         combat.addLog(`${name} attacks for ${dmg}`);
         break;
@@ -309,15 +371,22 @@ export function CombatScreen() {
       case 'attackDebuff': {
         let dmg = intent.damage;
         if (enemy.statusEffects.some((s) => s.status === 'weak')) dmg = Math.floor(dmg * 0.75);
+        setEnemyHit(enemy.id);
+        setTimeout(() => setEnemyHit(null), 300);
         const actual = combat.takeDamage(dmg);
         run.takeDamage(actual);
+        showPlayerHit(actual);
+        setTimeout(() => {
+          showPlayerDebuffed(intent.status);
+        }, 400);
         combat.addPlayerStatus({ status: intent.status, stacks: intent.stacks });
-        setMessage(`${name} attacks for ${dmg} + ${intent.status}!`);
+        setMessage(`${name} attacks for ${dmg} + ${getDebuffDescription(intent.status, intent.stacks)}`);
         combat.addLog(`${name} attacks for ${dmg} + ${intent.status}`);
         break;
       }
       case 'defend':
         combat.updateEnemy(enemy.id, { firewall: enemy.firewall + intent.firewall });
+        addFloat(enemy.id, `+${intent.firewall} FW`, '#60a5fa');
         setMessage(`${name} gains ${intent.firewall} Firewall`);
         combat.addLog(`${name} gains ${intent.firewall} Firewall`);
         break;
@@ -325,16 +394,30 @@ export function CombatScreen() {
         if (enemy.defId === 'ghostEndpoint') {
           combat.addEnemyStatus(enemy.id, { status: 'intangible', stacks: 1 });
         }
+        addFloat(enemy.id, 'BUFF', '#fbbf24');
         setMessage(`${name} buffs itself!`);
         combat.addLog(`${name} buffs itself`);
         break;
       case 'debuff':
         combat.addPlayerStatus({ status: intent.status, stacks: intent.stacks });
-        setMessage(`${name} applies ${intent.stacks} ${intent.status}!`);
+        showPlayerDebuffed(intent.status);
+        setMessage(`${name} applies ${getDebuffDescription(intent.status, intent.stacks)}`);
         combat.addLog(`${name} applies ${intent.status}`);
         break;
     }
   }, [combat, run]);
+
+  function getDebuffDescription(status: string, stacks: number): string {
+    switch (status) {
+      case 'hallucination': return `Hallucination x${stacks}! (${stacks * 30}% chance of 3 self-damage each turn)`;
+      case 'confused': return `Confused x${stacks}! (Random card costs change)`;
+      case 'vulnerable': return `Vulnerable x${stacks}! (Take 50% more damage)`;
+      case 'weak': return `Weak x${stacks}! (Deal 25% less damage)`;
+      case 'throttled': return `Throttled x${stacks}! (Reduced energy)`;
+      case 'overfit': return `Overfit x${stacks}!`;
+      default: return `${status} x${stacks}`;
+    }
+  }
 
   if (!combat.active) return null;
 
@@ -400,15 +483,44 @@ export function CombatScreen() {
           zIndex: 2,
         }}>
           <img
-            src="/sprites/byte.png"
+            src={BYTE_SPRITES[bytePose]}
             alt="Byte"
             style={{
               width: 320,
               height: 320,
               imageRendering: 'pixelated',
-              animation: 'byteIdle 3s ease-in-out infinite',
+              animation: bytePose === 'hurt'
+                ? 'playerShake 0.4s ease-in-out'
+                : bytePose === 'attack'
+                ? 'playerLunge 0.3s ease-in-out'
+                : bytePose === 'defend'
+                ? 'playerDefendPulse 0.5s ease-in-out'
+                : bytePose === 'debuffed'
+                ? 'playerDebuff 0.5s ease-in-out'
+                : 'byteIdle 3s ease-in-out infinite',
+              filter: bytePose === 'hurt' ? 'brightness(1.5) saturate(0.5)' : 'none',
+              transition: 'filter 0.15s',
             }}
           />
+          {/* Floating text on player */}
+          {floats.filter((f) => f.target === 'player').map((f) => (
+            <div key={f.id} style={{
+              position: 'absolute',
+              top: '25%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              fontFamily: "'Press Start 2P', monospace",
+              fontSize: 20,
+              color: f.color,
+              textShadow: '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000',
+              animation: 'dmgFloat 0.8s ease-out forwards',
+              pointerEvents: 'none',
+              zIndex: 20,
+              whiteSpace: 'nowrap',
+            }}>
+              {f.text}
+            </div>
+          ))}
         </div>
 
         {/* Enemies */}
@@ -425,6 +537,8 @@ export function CombatScreen() {
               enemy={enemy}
               targeting={isTargeting}
               onClick={handleTargetEnemy}
+              isHit={enemyHit === enemy.id}
+              floats={floats.filter((f) => f.target === enemy.id)}
             />
           ))}
         </div>
@@ -432,12 +546,19 @@ export function CombatScreen() {
         {/* Center message overlay */}
         {message && (
           <div style={{
-            position: 'absolute', top: '50%', left: '50%',
+            position: 'absolute', top: '40%', left: '50%',
             transform: 'translate(-50%, -50%)',
-            padding: '10px 24px', background: 'rgba(0,0,0,0.85)',
-            border: '1px solid #7b68ee44', borderRadius: 8,
-            fontSize: 16, fontWeight: 'bold', color: '#e0e0e0',
+            padding: '16px 32px',
+            maxWidth: '70%',
+            background: 'rgba(12, 8, 24, 0.92)',
+            border: '3px solid #6b4fa0',
+            boxShadow: 'inset 0 0 0 2px #1a1130, inset 0 0 0 4px #3d2d5c, 0 0 20px rgba(0,0,0,0.5)',
+            fontFamily: "'Press Start 2P', monospace",
+            fontSize: 13, fontWeight: 'bold', color: '#e0e0e0',
+            textAlign: 'center',
+            lineHeight: 1.6,
             pointerEvents: 'none', zIndex: 20,
+            textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000',
           }}>
             {message}
           </div>
@@ -485,26 +606,7 @@ export function CombatScreen() {
           </div>
         )}
 
-        {combat.phase === 'reward' && (
-          <div style={{ textAlign: 'center', padding: 16 }}>
-            <div style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.hp, marginBottom: 4 }}>
-              {'\u2705'} Victory!
-            </div>
-            <div style={{ fontSize: 13, color: COLORS.gold, marginBottom: 12 }}>
-              +{combat.goldReward} Gold
-            </div>
-            <button
-              onClick={() => {
-                run.addGold(combat.goldReward);
-                combat.endCombat();
-                run.setScreen('map');
-              }}
-              style={btnStyle}
-            >
-              Continue to Map
-            </button>
-          </div>
-        )}
+        {combat.phase === 'reward' && null}
       </div>
 
       {/* End Turn button */}
@@ -541,10 +643,98 @@ export function CombatScreen() {
         </div>
       )}
 
+      {/* Victory overlay — center screen */}
+      {combat.phase === 'reward' && (
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 50,
+        }}>
+          <div style={{
+            background: 'rgba(12, 8, 24, 0.95)',
+            border: '3px solid #6b4fa0',
+            boxShadow: 'inset 0 0 0 2px #1a1130, inset 0 0 0 4px #3d2d5c, 0 0 40px rgba(107,79,160,0.4)',
+            padding: '40px 60px',
+            textAlign: 'center',
+            fontFamily: "'Press Start 2P', monospace",
+          }}>
+            <div style={{
+              fontSize: 28,
+              fontWeight: 'bold',
+              color: '#4ade80',
+              textShadow: '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 0 20px rgba(74,222,128,0.5)',
+              marginBottom: 16,
+              letterSpacing: 3,
+            }}>
+              VICTORY!
+            </div>
+            <div style={{
+              fontSize: 16,
+              color: '#fbbf24',
+              textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000',
+              marginBottom: 32,
+            }}>
+              + {combat.goldReward} Gold
+            </div>
+            <button
+              onClick={() => {
+                run.addGold(combat.goldReward);
+                combat.endCombat();
+                run.setScreen('map');
+              }}
+              style={{
+                padding: '14px 36px',
+                background: 'rgba(12, 8, 24, 0.85)',
+                border: '3px solid #6b4fa0',
+                boxShadow: 'inset 0 0 0 2px #1a1130, inset 0 0 0 4px #3d2d5c',
+                color: '#c4b89a',
+                fontFamily: "'Press Start 2P', monospace",
+                fontSize: 14,
+                cursor: 'pointer',
+                letterSpacing: 2,
+              }}
+            >
+              Continue to Map
+            </button>
+          </div>
+        </div>
+      )}
+
       <style>{`
         @keyframes byteIdle {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-5px); }
+        }
+        @keyframes playerShake {
+          0%, 100% { transform: translateX(0); }
+          15% { transform: translateX(-12px); }
+          30% { transform: translateX(10px); }
+          45% { transform: translateX(-8px); }
+          60% { transform: translateX(6px); }
+          75% { transform: translateX(-3px); }
+        }
+        @keyframes playerLunge {
+          0%, 100% { transform: translateX(0); }
+          40% { transform: translateX(40px); }
+        }
+        @keyframes dmgFloat {
+          0% { opacity: 1; transform: translateX(-50%) translateY(0); }
+          100% { opacity: 0; transform: translateX(-50%) translateY(-40px); }
+        }
+        @keyframes playerDefendPulse {
+          0% { transform: scale(1); filter: brightness(1); }
+          30% { transform: scale(1.05); filter: brightness(1.3) drop-shadow(0 0 20px #60a5fa); }
+          100% { transform: scale(1); filter: brightness(1); }
+        }
+        @keyframes playerDebuff {
+          0% { filter: brightness(1); }
+          25% { filter: brightness(0.6) hue-rotate(60deg); }
+          50% { filter: brightness(1.2) hue-rotate(30deg); }
+          100% { filter: brightness(1) hue-rotate(0deg); }
         }
       `}</style>
     </div>

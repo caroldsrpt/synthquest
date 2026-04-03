@@ -135,9 +135,8 @@ export function CardComponent({ card, index, selected, playable, onClick, small 
         textAlign: 'center',
         color: card.upgraded ? COLORS.rarity.rare : '#e0e0e0',
         textShadow: PX_OUTLINE_SM,
-        whiteSpace: 'nowrap',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
+        wordBreak: 'break-word',
+        lineHeight: 1.3,
         letterSpacing: 0.5,
       }}>
         {name}

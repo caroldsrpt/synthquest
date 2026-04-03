@@ -13,38 +13,41 @@ interface RowDef {
 // Fixed map skeletons per act
 const ACT_LAYOUTS: Record<1 | 2 | 3, RowDef[]> = {
   1: [
-    { nodes: [{ col: 1, type: 'scenario', scenarioId: 's1_textGeneration' }] },                          // Row 0: MANDATORY
-    { nodes: [{ col: 0, type: 'combat' }, { col: 2, type: 'combat' }] },                                 // Row 1: branch
-    { nodes: [{ col: 0, type: 'scenario', scenarioId: 's2_temperature' }, { col: 2, type: 'scenario', scenarioId: 's3_hallucination' }] }, // Row 2
-    { nodes: [{ col: 0, type: 'combat' }, { col: 2, type: 'combat' }] },                                 // Row 3
-    { nodes: [{ col: 1, type: 'scenario', scenarioId: 's4_grounding' }] },                               // Row 4: MANDATORY
-    { nodes: [{ col: 1, type: 'combat' }] },                                                              // Row 5
-    { nodes: [{ col: 0, type: 'scenario', scenarioId: 's5_promptEng' }, { col: 2, type: 'shop' }] },     // Row 6
-    { nodes: [{ col: 0, type: 'scenario', scenarioId: 's6_contextWindow' }, { col: 2, type: 'combat' }] }, // Row 7
-    { nodes: [{ col: 1, type: 'rest' }] },                                                                // Row 8
-    { nodes: [{ col: 1, type: 'boss' }] },                                                                // Row 9
+    { nodes: [{ col: 1, type: 'scenario', scenarioId: 's1_textGeneration' }] },
+    { nodes: [{ col: 2, type: 'combat' }] },
+    { nodes: [{ col: 0, type: 'scenario', scenarioId: 's2_temperature' }] },
+    { nodes: [{ col: 2, type: 'combat' }] },
+    { nodes: [{ col: 1, type: 'scenario', scenarioId: 's3_hallucination' }] },
+    { nodes: [{ col: 0, type: 'scenario', scenarioId: 's4_grounding' }] },
+    { nodes: [{ col: 2, type: 'combat' }] },
+    { nodes: [{ col: 1, type: 'scenario', scenarioId: 's5_promptEng' }] },
+    { nodes: [{ col: 0, type: 'scenario', scenarioId: 's6_contextWindow' }] },
+    { nodes: [{ col: 1, type: 'rest' }] },
+    { nodes: [{ col: 1, type: 'boss' }] },
   ],
   2: [
     { nodes: [{ col: 1, type: 'scenario', scenarioId: 's7_rag' }] },
-    { nodes: [{ col: 0, type: 'combat' }, { col: 2, type: 'combat' }] },
-    { nodes: [{ col: 0, type: 'scenario', scenarioId: 's8_api' }, { col: 2, type: 'scenario', scenarioId: 's9_modelSelection' }] },
-    { nodes: [{ col: 0, type: 'combat' }, { col: 2, type: 'elite' }] },
-    { nodes: [{ col: 1, type: 'scenario', scenarioId: 's10_toolUse' }] },
+    { nodes: [{ col: 0, type: 'combat' }] },
+    { nodes: [{ col: 2, type: 'scenario', scenarioId: 's8_api' }] },
+    { nodes: [{ col: 0, type: 'scenario', scenarioId: 's9_modelSelection' }] },
     { nodes: [{ col: 1, type: 'combat' }] },
-    { nodes: [{ col: 0, type: 'scenario', scenarioId: 's11_fewShot' }, { col: 2, type: 'shop' }] },
-    { nodes: [{ col: 0, type: 'scenario', scenarioId: 's12_errorHandling' }, { col: 2, type: 'combat' }] },
+    { nodes: [{ col: 2, type: 'scenario', scenarioId: 's10_toolUse' }] },
+    { nodes: [{ col: 0, type: 'combat' }] },
+    { nodes: [{ col: 1, type: 'scenario', scenarioId: 's11_fewShot' }] },
+    { nodes: [{ col: 2, type: 'scenario', scenarioId: 's12_errorHandling' }] },
     { nodes: [{ col: 1, type: 'rest' }] },
     { nodes: [{ col: 1, type: 'boss' }] },
   ],
   3: [
     { nodes: [{ col: 1, type: 'scenario', scenarioId: 's13_agent' }] },
-    { nodes: [{ col: 0, type: 'combat' }, { col: 2, type: 'combat' }] },
-    { nodes: [{ col: 0, type: 'scenario', scenarioId: 's14_agenticWorkflow' }, { col: 2, type: 'scenario', scenarioId: 's15_automation' }] },
-    { nodes: [{ col: 0, type: 'combat' }, { col: 2, type: 'elite' }] },
-    { nodes: [{ col: 1, type: 'scenario', scenarioId: 's16_orchestration' }] },
+    { nodes: [{ col: 2, type: 'combat' }] },
+    { nodes: [{ col: 0, type: 'scenario', scenarioId: 's14_agenticWorkflow' }] },
+    { nodes: [{ col: 2, type: 'scenario', scenarioId: 's15_automation' }] },
     { nodes: [{ col: 1, type: 'combat' }] },
-    { nodes: [{ col: 0, type: 'scenario', scenarioId: 's17_mcp' }, { col: 2, type: 'shop' }] },
-    { nodes: [{ col: 0, type: 'scenario', scenarioId: 's18_fineTuning' }, { col: 2, type: 'combat' }] },
+    { nodes: [{ col: 0, type: 'scenario', scenarioId: 's16_orchestration' }] },
+    { nodes: [{ col: 2, type: 'combat' }] },
+    { nodes: [{ col: 1, type: 'scenario', scenarioId: 's17_mcp' }] },
+    { nodes: [{ col: 0, type: 'scenario', scenarioId: 's18_fineTuning' }] },
     { nodes: [{ col: 1, type: 'rest' }] },
     { nodes: [{ col: 1, type: 'boss' }] },
   ],

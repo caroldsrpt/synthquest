@@ -97,6 +97,7 @@ export function PlayerStatus({
         {statusEffects.map((s) => (
           <span
             key={s.status}
+            title={getStatusDescription(s.status)}
             style={{
               fontSize: 10,
               padding: '4px 8px',
@@ -120,6 +121,20 @@ export function PlayerStatus({
       </div>
     </div>
   );
+}
+
+function getStatusDescription(status: string): string {
+  switch (status) {
+    case 'hallucination': return 'Each stack has a 30% chance of dealing 3 damage to you at end of turn. Grounded blocks it.';
+    case 'grounded': return 'Absorbs hallucination triggers. Each trigger removes 1 stack.';
+    case 'context': return 'Adds bonus damage/firewall to your next card. Consumed after use.';
+    case 'vulnerable': return 'Take 50% more damage. Wears off by 1 each turn.';
+    case 'weak': return 'Deal 25% less damage. Wears off by 1 each turn.';
+    case 'throttled': return 'Reduced energy next turn.';
+    case 'confused': return 'Random card costs are shuffled.';
+    case 'overfit': return 'Your cards become less effective over time.';
+    default: return '';
+  }
 }
 
 function getStatusBg(status: string): string {
@@ -152,14 +167,14 @@ function getStatusFg(status: string): string {
 
 function getStatusLabel(status: string): string {
   switch (status) {
-    case 'hallucination': return 'HAL';
-    case 'grounded': return 'GND';
-    case 'context': return 'CTX';
-    case 'vulnerable': return 'VLN';
-    case 'weak': return 'WEK';
-    case 'throttled': return 'THR';
-    case 'confused': return 'CON';
-    case 'overfit': return 'OVF';
-    default: return status.slice(0, 3).toUpperCase();
+    case 'hallucination': return 'Hallucination';
+    case 'grounded': return 'Grounded';
+    case 'context': return 'Context';
+    case 'vulnerable': return 'Vulnerable';
+    case 'weak': return 'Weak';
+    case 'throttled': return 'Throttled';
+    case 'confused': return 'Confused';
+    case 'overfit': return 'Overfit';
+    default: return status;
   }
 }

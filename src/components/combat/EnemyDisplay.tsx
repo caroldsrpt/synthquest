@@ -26,9 +26,11 @@ interface EnemyDisplayProps {
   enemy: EnemyInstance;
   targeting: boolean;
   onClick: (id: string) => void;
+  isHit?: boolean;
+  floats?: { text: string; color: string; id: number }[];
 }
 
-export function EnemyDisplay({ enemy, targeting, onClick }: EnemyDisplayProps) {
+export function EnemyDisplay({ enemy, targeting, onClick, isHit, floats }: EnemyDisplayProps) {
   const def = ENEMIES[enemy.defId];
   if (!def) return null;
 
@@ -77,16 +79,40 @@ export function EnemyDisplay({ enemy, targeting, onClick }: EnemyDisplayProps) {
 
       {/* Enemy sprite */}
       {sprite ? (
-        <img
-          src={sprite}
-          alt={def.name}
-          style={{
-            width: spriteSize,
-            height: spriteSize,
-            imageRendering: 'pixelated',
-            animation: isDead ? 'none' : 'enemyIdle 2s ease-in-out infinite',
-          }}
-        />
+        <div style={{ position: 'relative' }}>
+          <img
+            src={sprite}
+            alt={def.name}
+            style={{
+              width: spriteSize,
+              height: spriteSize,
+              imageRendering: 'pixelated',
+              animation: isHit
+                ? 'enemyShake 0.4s ease-in-out'
+                : isDead ? 'none' : 'enemyIdle 2s ease-in-out infinite',
+              filter: isHit ? 'brightness(2) saturate(0.3)' : 'none',
+              transition: 'filter 0.15s',
+            }}
+          />
+          {floats && floats.map((f) => (
+            <div key={f.id} style={{
+              position: 'absolute',
+              top: '25%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              fontFamily: "'Press Start 2P', monospace",
+              fontSize: 20,
+              color: f.color,
+              textShadow: '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000',
+              animation: 'dmgFloat 0.8s ease-out forwards',
+              pointerEvents: 'none',
+              zIndex: 20,
+              whiteSpace: 'nowrap',
+            }}>
+              {f.text}
+            </div>
+          ))}
+        </div>
       ) : (
         <div style={{
           width: spriteSize,
@@ -190,6 +216,18 @@ export function EnemyDisplay({ enemy, targeting, onClick }: EnemyDisplayProps) {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-4px); }
         }
+        @keyframes enemyShake {
+          0%, 100% { transform: translateX(0); }
+          15% { transform: translateX(10px); }
+          30% { transform: translateX(-8px); }
+          45% { transform: translateX(6px); }
+          60% { transform: translateX(-4px); }
+          75% { transform: translateX(2px); }
+        }
+        @keyframes dmgFloat {
+          0% { opacity: 1; transform: translateX(-50%) translateY(0); }
+          100% { opacity: 0; transform: translateX(-50%) translateY(-40px); }
+        }
       `}</style>
     </div>
   );
@@ -221,13 +259,25 @@ function getIntentColor(intent: EnemyInstance['currentIntent']): string {
 
 function getIntentText(intent: EnemyInstance['currentIntent']): string {
   switch (intent.type) {
-    case 'attack': return `${intent.damage}`;
-    case 'attackMulti': return `${intent.damage}x${intent.times}`;
-    case 'defend': return `${intent.firewall}`;
+    case 'attack': return `ATK ${intent.damage}`;
+    case 'attackMulti': return `ATK ${intent.damage}x${intent.times}`;
+    case 'defend': return `DEF ${intent.firewall}`;
     case 'buff': return 'Buff';
-    case 'debuff': return intent.status.slice(0, 4);
-    case 'attackDebuff': return `${intent.damage}+${intent.status.slice(0, 3)}`;
+    case 'debuff': return `${getStatusFullName(intent.status)} x${intent.stacks}`;
+    case 'attackDebuff': return `ATK ${intent.damage} + ${getStatusFullName(intent.status)}`;
     case 'unknown': return '???';
+  }
+}
+
+function getStatusFullName(status: string): string {
+  switch (status) {
+    case 'hallucination': return 'Hallucinate';
+    case 'confused': return 'Confuse';
+    case 'vulnerable': return 'Vulnerable';
+    case 'weak': return 'Weak';
+    case 'throttled': return 'Throttle';
+    case 'overfit': return 'Overfit';
+    default: return status;
   }
 }
 

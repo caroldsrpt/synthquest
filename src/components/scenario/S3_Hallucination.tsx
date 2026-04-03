@@ -57,7 +57,7 @@ export function S3_Hallucination({ onComplete }: { onComplete: () => void }) {
                 </span>
                 {checked[i] && (
                   <span style={{ fontSize: 10, color: '#ef4444', marginLeft: 4 }}>
-                    \u274C {claim.check}
+                    {'\u274C'} {claim.check}
                   </span>
                 )}
                 {i < AI_CLAIMS.length - 1 ? ', ' : ''}
