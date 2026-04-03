@@ -4,7 +4,7 @@ import { useRunStore } from '../../stores/runStore';
 import { CARDS } from '../../game/data/cards';
 import { getNextIntent, ENEMIES } from '../../game/data/enemies';
 import { getCardCost, getCardEffects, getCardName, createCardInstance } from '../../utils/cardUtils';
-import { COLORS, HALLUCINATION_TRIGGER_CHANCE, HALLUCINATION_SELF_DAMAGE, CONTEXT_CAP } from '../../utils/constants';
+import { HALLUCINATION_TRIGGER_CHANCE, HALLUCINATION_SELF_DAMAGE, CONTEXT_CAP } from '../../utils/constants';
 import { randInt } from '../../utils/random';
 import { HandDisplay } from '../combat/HandDisplay';
 import { EnemyDisplay } from '../combat/EnemyDisplay';
@@ -741,8 +741,3 @@ export function CombatScreen() {
   );
 }
 
-const btnStyle: React.CSSProperties = {
-  padding: '10px 32px', background: 'rgba(12,8,24,0.85)', border: '3px solid #6b4fa0',
-  color: '#c4b89a', fontFamily: "'Press Start 2P', monospace",
-  fontSize: 10, cursor: 'pointer', letterSpacing: 1,
-};
