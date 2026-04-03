@@ -23,31 +23,36 @@ export function S1_TextGeneration({ onComplete }: { onComplete: () => void }) {
   const [pausedAtWord, setPausedAtWord] = useState(-1);
   const timer = useRef<number>(0);
 
+  const PAUSE_AT = [2, 5]; // word indices where we pause to show probabilities
+
   // Auto-advance word generation
   useEffect(() => {
     if (phase !== 'generate') return;
     if (wordIndex < 0) return;
+    if (showingProbs) return; // Don't advance while showing probability picker
+
     if (wordIndex >= WORDS.length) {
       setPhase('explain');
       return;
     }
 
-    // Pause at words 2 and 5 to show probabilities
-    if ((wordIndex === 2 || wordIndex === 5) && pausedAtWord !== wordIndex) {
-      setShowingProbs(true);
+    // Check if we should pause here
+    if (PAUSE_AT.includes(wordIndex) && pausedAtWord !== wordIndex) {
       setPausedAtWord(wordIndex);
-      return; // Wait for user to click "Pick word"
+      setShowingProbs(true);
+      return;
     }
 
     timer.current = window.setTimeout(() => {
       setWordIndex((i) => i + 1);
-    }, 400);
+    }, 500);
     return () => clearTimeout(timer.current);
-  }, [phase, wordIndex, pausedAtWord]);
+  }, [phase, wordIndex, showingProbs, pausedAtWord]);
 
   const handlePickWord = () => {
     setShowingProbs(false);
-    setWordIndex((i) => i + 1);
+    // Advance to next word after a brief delay
+    setTimeout(() => setWordIndex((i) => i + 1), 100);
   };
 
   return (
