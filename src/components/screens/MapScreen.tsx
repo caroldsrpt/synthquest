@@ -8,20 +8,32 @@ import { COLORS, COMBAT_GOLD_MIN, COMBAT_GOLD_MAX, ELITE_GOLD_MIN, ELITE_GOLD_MA
 import { generateCardRewards } from '../../utils/cardUtils';
 import type { MapNode } from '../../game/data/types';
 
+import { SCENARIOS } from '../../game/data/scenarios';
+
 const NODE_ICONS: Record<string, string> = {
   combat: '\u2694\uFE0F', elite: '\uD83D\uDC80', event: '\u2753',
   shop: '\uD83D\uDCB0', rest: '\u2764\uFE0F', boss: '\u2B50',
+  scenario: '\uD83D\uDCA1',
 };
 
 const NODE_COLORS: Record<string, string> = {
   combat: '#9ca3af', elite: '#f59e0b', event: '#a78bfa',
   shop: '#34d399', rest: '#60a5fa', boss: '#ef4444',
+  scenario: '#fbbf24',
 };
 
 const NODE_LABELS: Record<string, string> = {
   combat: 'Combat', elite: 'Elite', event: 'Event',
-  shop: 'Shop', rest: 'Rest', boss: 'BOSS',
+  shop: 'Shop', rest: 'Rest', boss: 'BOSS', scenario: 'Lesson',
 };
+
+function getNodeLabel(node: MapNode): string {
+  if (node.type === 'scenario' && node.scenarioId) {
+    const s = SCENARIOS[node.scenarioId];
+    return s ? s.title : 'Lesson';
+  }
+  return NODE_LABELS[node.type] || node.type;
+}
 
 export function MapScreen() {
   const run = useRunStore();
@@ -58,6 +70,9 @@ export function MapScreen() {
       useCombatStore.getState().initCombat([...run.deck], enemies, run.getMaxEnergy());
       useCombatStore.getState().setRewards(gold, generateCardRewards(run.act, node.type === 'boss' ? 'boss' : node.type === 'elite' ? 'elite' : 'normal'), null);
       run.setScreen('combat');
+    } else if (node.type === 'scenario' && node.scenarioId) {
+      run.setCurrentScenario(node.scenarioId);
+      run.setScreen('scenario');
     } else {
       run.setScreen(node.type as 'rest' | 'shop' | 'event');
     }
@@ -197,7 +212,7 @@ export function MapScreen() {
                   whiteSpace: 'nowrap',
                   textShadow: '0 0 8px #000',
                 }}>
-                  {NODE_LABELS[node.type]}
+                  {getNodeLabel(node)}
                 </span>
               )}
             </div>

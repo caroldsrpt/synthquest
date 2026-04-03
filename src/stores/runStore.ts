@@ -42,6 +42,12 @@ interface RunStore extends RunState {
   markTeachingShown: (triggerId: string) => void;
   hasTeachingShown: (triggerId: string) => boolean;
 
+  // Scenarios
+  completeScenario: (scenarioId: string) => void;
+  hasCompletedScenario: (scenarioId: string) => boolean;
+  currentScenarioId: string | null;
+  setCurrentScenario: (id: string | null) => void;
+
   // Getters
   getMaxEnergy: () => number;
   getDrawCount: () => number;
@@ -61,6 +67,7 @@ const INITIAL_RUN: RunState = {
   visitedNodeIds: [],
   cardRemovalCount: 0,
   teachingTriggersShown: [],
+  completedScenarios: [],
 };
 
 export const useRunStore = create<RunStore>((set, get) => ({
@@ -174,6 +181,20 @@ export const useRunStore = create<RunStore>((set, get) => ({
   },
 
   hasTeachingShown: (triggerId) => get().teachingTriggersShown.includes(triggerId),
+
+  // Scenarios
+  currentScenarioId: null,
+  setCurrentScenario: (id) => set({ currentScenarioId: id }),
+
+  completeScenario: (scenarioId) => {
+    set((s) => ({
+      completedScenarios: s.completedScenarios.includes(scenarioId)
+        ? s.completedScenarios
+        : [...s.completedScenarios, scenarioId],
+    }));
+  },
+
+  hasCompletedScenario: (scenarioId) => get().completedScenarios.includes(scenarioId),
 
   getMaxEnergy: () => {
     const state = get();

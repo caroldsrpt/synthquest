@@ -1,116 +1,118 @@
 import type { MapNode, MapNodeType } from '../data/types';
-import { uid, randInt } from '../../utils/random';
+import { uid } from '../../utils/random';
 import { ACT_ENCOUNTERS, ELITE_ENCOUNTERS, BOSS_ENCOUNTERS } from '../data/enemies';
 import { weightedPick } from '../../utils/random';
 
-// Clean 3-lane map
+// Semi-fixed map: scenario positions are predetermined, other nodes are random
+// 10 rows per act, 3 lanes max
+
+interface RowDef {
+  nodes: { col: number; type: MapNodeType; scenarioId?: string }[];
+}
+
+// Fixed map skeletons per act
+const ACT_LAYOUTS: Record<1 | 2 | 3, RowDef[]> = {
+  1: [
+    { nodes: [{ col: 1, type: 'scenario', scenarioId: 's1_textGeneration' }] },                          // Row 0: MANDATORY
+    { nodes: [{ col: 0, type: 'combat' }, { col: 2, type: 'combat' }] },                                 // Row 1: branch
+    { nodes: [{ col: 0, type: 'scenario', scenarioId: 's2_temperature' }, { col: 2, type: 'scenario', scenarioId: 's3_hallucination' }] }, // Row 2
+    { nodes: [{ col: 0, type: 'combat' }, { col: 2, type: 'combat' }] },                                 // Row 3
+    { nodes: [{ col: 1, type: 'scenario', scenarioId: 's4_grounding' }] },                               // Row 4: MANDATORY
+    { nodes: [{ col: 1, type: 'combat' }] },                                                              // Row 5
+    { nodes: [{ col: 0, type: 'scenario', scenarioId: 's5_promptEng' }, { col: 2, type: 'shop' }] },     // Row 6
+    { nodes: [{ col: 0, type: 'scenario', scenarioId: 's6_contextWindow' }, { col: 2, type: 'combat' }] }, // Row 7
+    { nodes: [{ col: 1, type: 'rest' }] },                                                                // Row 8
+    { nodes: [{ col: 1, type: 'boss' }] },                                                                // Row 9
+  ],
+  2: [
+    { nodes: [{ col: 1, type: 'scenario', scenarioId: 's7_rag' }] },
+    { nodes: [{ col: 0, type: 'combat' }, { col: 2, type: 'combat' }] },
+    { nodes: [{ col: 0, type: 'scenario', scenarioId: 's8_api' }, { col: 2, type: 'scenario', scenarioId: 's9_modelSelection' }] },
+    { nodes: [{ col: 0, type: 'combat' }, { col: 2, type: 'elite' }] },
+    { nodes: [{ col: 1, type: 'scenario', scenarioId: 's10_toolUse' }] },
+    { nodes: [{ col: 1, type: 'combat' }] },
+    { nodes: [{ col: 0, type: 'scenario', scenarioId: 's11_fewShot' }, { col: 2, type: 'shop' }] },
+    { nodes: [{ col: 0, type: 'scenario', scenarioId: 's12_errorHandling' }, { col: 2, type: 'combat' }] },
+    { nodes: [{ col: 1, type: 'rest' }] },
+    { nodes: [{ col: 1, type: 'boss' }] },
+  ],
+  3: [
+    { nodes: [{ col: 1, type: 'scenario', scenarioId: 's13_agent' }] },
+    { nodes: [{ col: 0, type: 'combat' }, { col: 2, type: 'combat' }] },
+    { nodes: [{ col: 0, type: 'scenario', scenarioId: 's14_agenticWorkflow' }, { col: 2, type: 'scenario', scenarioId: 's15_automation' }] },
+    { nodes: [{ col: 0, type: 'combat' }, { col: 2, type: 'elite' }] },
+    { nodes: [{ col: 1, type: 'scenario', scenarioId: 's16_orchestration' }] },
+    { nodes: [{ col: 1, type: 'combat' }] },
+    { nodes: [{ col: 0, type: 'scenario', scenarioId: 's17_mcp' }, { col: 2, type: 'shop' }] },
+    { nodes: [{ col: 0, type: 'scenario', scenarioId: 's18_fineTuning' }, { col: 2, type: 'combat' }] },
+    { nodes: [{ col: 1, type: 'rest' }] },
+    { nodes: [{ col: 1, type: 'boss' }] },
+  ],
+};
 
 export function generateMap(act: 1 | 2 | 3): MapNode[][] {
+  const layout = ACT_LAYOUTS[act];
   const map: MapNode[][] = [];
 
-  // Define structure: [row] = array of {col, type}
-  // 3 lanes: left (0), center (1), right (2)
-  const layout = generateLayout();
-
+  // Create nodes from layout
   for (let row = 0; row < layout.length; row++) {
-    const nodes: MapNode[] = layout[row].map(({ col, type }) => ({
+    const nodes: MapNode[] = layout[row].nodes.map((def) => ({
       id: uid(),
       row,
-      col,
-      type,
+      col: def.col,
+      type: def.type,
       connections: [],
       visited: false,
-      enemies: (type === 'combat' || type === 'elite' || type === 'boss')
-        ? getEncounterEnemyIds(act, type as 'combat' | 'elite' | 'boss')
+      scenarioId: def.scenarioId,
+      enemies: (def.type === 'combat' || def.type === 'elite' || def.type === 'boss')
+        ? getEncounterEnemyIds(act, def.type as 'combat' | 'elite' | 'boss')
         : undefined,
     }));
     map.push(nodes);
   }
 
-  // Connect: each node connects to the closest node(s) in the next row
+  // Connect rows
   for (let row = 0; row < map.length - 1; row++) {
     const curr = map[row];
     const next = map[row + 1];
 
-    for (const node of curr) {
-      // Find closest node(s) in next row by column distance
-      const sorted = [...next].sort((a, b) =>
-        Math.abs(a.col - node.col) - Math.abs(b.col - node.col)
-      );
+    if (next.length === 1) {
+      // All → single
+      for (const node of curr) node.connections.push(next[0].id);
+    } else if (curr.length === 1) {
+      // Single → all
+      for (const n of next) curr[0].connections.push(n.id);
+    } else {
+      // Multi → multi: connect by closest column, no crossing
+      const connected = new Set<number>();
+      for (let i = 0; i < curr.length; i++) {
+        const sorted = [...next].sort((a, b) =>
+          Math.abs(a.col - curr[i].col) - Math.abs(b.col - curr[i].col)
+        );
+        curr[i].connections.push(sorted[0].id);
+        connected.add(next.indexOf(sorted[0]));
 
-      // Always connect to closest
-      node.connections.push(sorted[0].id);
-
-      // Connect to second closest if it's adjacent (distance <= 1)
-      if (sorted.length > 1 && Math.abs(sorted[1].col - node.col) <= 1) {
-        if (Math.random() < 0.4) {
-          node.connections.push(sorted[1].id);
+        // Add second connection sometimes
+        if (sorted.length > 1 && Math.abs(sorted[1].col - curr[i].col) <= 1 && Math.random() < 0.35) {
+          curr[i].connections.push(sorted[1].id);
+          connected.add(next.indexOf(sorted[1]));
         }
       }
-    }
-
-    // Ensure every next-row node is reachable
-    for (const nextNode of next) {
-      const hasIncoming = curr.some((n) => n.connections.includes(nextNode.id));
-      if (!hasIncoming) {
-        const closest = [...curr].sort((a, b) =>
-          Math.abs(a.col - nextNode.col) - Math.abs(b.col - nextNode.col)
-        )[0];
-        closest.connections.push(nextNode.id);
+      // Ensure all next nodes are reachable
+      for (let j = 0; j < next.length; j++) {
+        if (!connected.has(j)) {
+          const nearest = [...curr].sort((a, b) =>
+            Math.abs(a.col - next[j].col) - Math.abs(b.col - next[j].col)
+          )[0];
+          nearest.connections.push(next[j].id);
+        }
       }
-    }
-
-    // Deduplicate
-    for (const node of curr) {
-      node.connections = [...new Set(node.connections)];
+      // Deduplicate
+      for (const node of curr) node.connections = [...new Set(node.connections)];
     }
   }
 
   return map;
-}
-
-function generateLayout(): { col: number; type: MapNodeType }[][] {
-  return [
-    // Row 0: single start combat
-    [{ col: 1, type: 'combat' }],
-
-    // Row 1: branch to 2-3
-    randInt(0, 1) === 0
-      ? [{ col: 0, type: 'combat' }, { col: 2, type: 'combat' }]
-      : [{ col: 0, type: 'combat' }, { col: 1, type: 'event' }, { col: 2, type: 'combat' }],
-
-    // Row 2: 2-3 nodes, events possible
-    generateMidRow([0.6, 0.25, 0.1, 0.05], 2),
-
-    // Row 3: 2-3 nodes, shop/elite can appear
-    generateMidRow([0.45, 0.2, 0.15, 0.1, 0.1], 3),
-
-    // Row 4: 2-3 nodes
-    generateMidRow([0.5, 0.2, 0.1, 0.1, 0.1], 4),
-
-    // Row 5: 2 nodes, converging
-    generateMidRow([0.5, 0.2, 0.15, 0.1, 0.05], 2),
-
-    // Row 6: rest before boss
-    [{ col: 1, type: 'rest' as MapNodeType }],
-
-    // Row 7: boss
-    [{ col: 1, type: 'boss' as MapNodeType }],
-  ];
-}
-
-function generateMidRow(
-  weights: number[], // [combat, event, shop, elite, rest]
-  minNodes: number
-): { col: number; type: MapNodeType }[] {
-  const types: MapNodeType[] = ['combat', 'event', 'shop', 'elite', 'rest'];
-  const count = randInt(minNodes, 3);
-  const cols = count === 1 ? [1] : count === 2 ? [0, 2] : [0, 1, 2];
-
-  return cols.map((col) => ({
-    col,
-    type: weightedPick(types, weights),
-  }));
 }
 
 function getEncounterEnemyIds(act: 1 | 2 | 3, nodeType: 'combat' | 'elite' | 'boss'): string[] {

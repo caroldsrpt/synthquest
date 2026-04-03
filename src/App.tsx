@@ -3,6 +3,7 @@ import { TitleScreen } from './components/screens/TitleScreen';
 import { MapScreen } from './components/screens/MapScreen';
 import { CombatScreen } from './components/screens/CombatScreen';
 import { RestScreen } from './components/screens/RestScreen';
+import { ScenarioScreen } from './components/screens/ScenarioScreen';
 import { GameOverScreen, VictoryScreen } from './components/screens/GameOverScreen';
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
       {screen === 'map' && <MapScreen />}
       {screen === 'combat' && <CombatScreen />}
       {screen === 'rest' && <RestScreen />}
+      {screen === 'scenario' && <ScenarioScreen />}
       {screen === 'gameOver' && <GameOverScreen />}
       {screen === 'victory' && <VictoryScreen />}
       {screen === 'event' && <PlaceholderScreen label="Event" />}
@@ -26,7 +28,11 @@ function App() {
 function PlaceholderScreen({ label }: { label: string }) {
   const setScreen = useRunStore((s) => s.setScreen);
   return (
-    <div style={{ ...fullScreen, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+    <div style={{
+      width: '100%', height: '100%',
+      background: '#0c0c1a', fontFamily: 'monospace', color: '#e0e0e0',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+    }}>
       <div style={{ fontSize: 20, marginBottom: 16 }}>{label} (Coming Soon)</div>
       <button
         onClick={() => setScreen('map')}
@@ -41,10 +47,5 @@ function PlaceholderScreen({ label }: { label: string }) {
     </div>
   );
 }
-
-export const fullScreen: React.CSSProperties = {
-  width: '100%', height: '100%',
-  background: '#0c0c1a', fontFamily: 'monospace', color: '#e0e0e0',
-};
 
 export default App;

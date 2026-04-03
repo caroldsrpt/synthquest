@@ -146,17 +146,31 @@ export interface EventDef {
 
 // === Map Types ===
 
-export type MapNodeType = 'combat' | 'elite' | 'event' | 'shop' | 'rest' | 'boss';
+export type MapNodeType = 'combat' | 'elite' | 'event' | 'shop' | 'rest' | 'boss' | 'scenario';
 
 export interface MapNode {
   id: string;
   row: number;
   col: number;
   type: MapNodeType;
-  connections: string[]; // IDs of nodes in next row
+  connections: string[];
   visited: boolean;
-  // Combat-specific
-  enemies?: string[]; // enemy def IDs for this encounter
+  enemies?: string[];
+  scenarioId?: string; // for scenario nodes — references ScenarioDef.id
+}
+
+// === Scenario Types ===
+
+export interface ScenarioDef {
+  id: string;
+  number: number; // S1-S18
+  title: string;
+  concept: string;
+  act: 1 | 2 | 3;
+  cardRewardId: string; // card def ID earned on completion
+  popupTitle: string;
+  popupText: string;
+  instruction: string; // shown at bottom during scenario
 }
 
 // === Run State ===
@@ -175,6 +189,7 @@ export interface RunState {
   visitedNodeIds: string[];
   cardRemovalCount: number;
   teachingTriggersShown: string[];
+  completedScenarios: string[]; // scenario IDs completed this run
   // Temporary per-combat event buffs
   nextCombatStatus?: { status: StatusType; stacks: number }[];
   nextCombatFirewall?: { amount: number; combatsLeft: number };
@@ -232,6 +247,7 @@ export type GameScreen =
   | 'event'
   | 'shop'
   | 'rest'
+  | 'scenario'
   | 'gameOver'
   | 'victory'
   | 'knowledgeBase';
