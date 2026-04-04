@@ -139,7 +139,19 @@ export function ShopScreen() {
       position: 'relative',
       overflow: 'hidden',
     }}>
-      {/* Background */}
+      {/* Pixel art background */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        backgroundImage: 'url(/sprites/shop-bg.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        imageRendering: 'pixelated',
+        opacity: 0.25,
+        pointerEvents: 'none',
+      }} />
+
+      {/* Background gradient overlay */}
       <div style={{
         position: 'absolute',
         inset: 0,

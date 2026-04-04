@@ -13,13 +13,24 @@ const PX_OUTLINE_SM = [
 
 // Map enemy IDs to sprite files
 const ENEMY_SPRITES: Record<string, string> = {
+  // Act 1
   staleCache: '/sprites/enemies/staleCache.png',
   tokenFlood: '/sprites/enemies/tokenFlood.png',
   theParrot: '/sprites/enemies/theParrot.png',
   junkGenerator: '/sprites/enemies/junkGenerator.png',
   confabulator: '/sprites/enemies/confabulator.png',
   promptInjector: '/sprites/enemies/staleCache.png', // reuse until we generate more
-  // Act 2+3 can reuse or get their own later
+  // Act 2
+  timeoutError: '/sprites/enemies/timeoutError.png',
+  dataSilo: '/sprites/enemies/dataSilo.png',
+  ghostEndpoint: '/sprites/enemies/ghostEndpoint.png',
+  theMonolith: '/sprites/enemies/theMonolith.png',
+  theSilo: '/sprites/enemies/theSilo.png',
+  dataFragment: '/sprites/enemies/dataFragment.png',
+  // Act 3
+  theCopycat: '/sprites/enemies/theCopycat.png',
+  theGatekeeper: '/sprites/enemies/theGatekeeper.png',
+  theOverfitter: '/sprites/enemies/theOverfitter.png',
 };
 
 interface EnemyDisplayProps {

@@ -10,6 +10,7 @@ import { HandDisplay } from '../combat/HandDisplay';
 import { EnemyDisplay } from '../combat/EnemyDisplay';
 import { PlayerStatus } from '../combat/PlayerStatus';
 import { CardComponent } from '../combat/CardComponent';
+import { CARD_TIPS } from '../../game/data/cardTips';
 import type { CardInstance, CardEffect, EnemyInstance } from '../../game/data/types';
 
 type RewardStep = 'gold' | 'cards' | 'done';
@@ -232,6 +233,42 @@ export function CombatScreen() {
   const [enemyHit, setEnemyHit] = useState<string | null>(null);
   const [floats, setFloats] = useState<{ target: 'player' | string; text: string; color: string; id: number }[]>([]);
   const floatIdRef = useRef(0);
+
+  // First-draw card tip system
+  const [activeTip, setActiveTip] = useState<string | null>(null);
+  const tipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Check for first-draw tips whenever hand changes during playerTurn
+  useEffect(() => {
+    if (combat.phase !== 'playerTurn' || combat.hand.length === 0) return;
+    const shownTips = useRunStore.getState().shownCardTips;
+    for (const card of combat.hand) {
+      const tip = CARD_TIPS[card.defId];
+      if (tip && !shownTips.includes(card.defId)) {
+        setActiveTip(tip);
+        run.markCardTipShown(card.defId);
+        // Auto-dismiss after 4 seconds
+        if (tipTimerRef.current) clearTimeout(tipTimerRef.current);
+        tipTimerRef.current = setTimeout(() => setActiveTip(null), 4000);
+        break; // Only show one tip at a time
+      }
+    }
+  }, [combat.phase, combat.hand]);
+
+  // Cleanup tip timer on unmount
+  useEffect(() => {
+    return () => {
+      if (tipTimerRef.current) clearTimeout(tipTimerRef.current);
+    };
+  }, []);
+
+  const dismissTip = useCallback(() => {
+    setActiveTip(null);
+    if (tipTimerRef.current) {
+      clearTimeout(tipTimerRef.current);
+      tipTimerRef.current = null;
+    }
+  }, []);
 
   const addFloat = (target: 'player' | string, text: string, color: string) => {
     floatIdRef.current++;
@@ -527,22 +564,9 @@ export function CombatScreen() {
   const handleEndTurn = useCallback(async () => {
     if (combat.phase !== 'playerTurn') return;
 
-    // Discard hand (keep retain cards)
-    const retained: CardInstance[] = [];
-    const discarded: CardInstance[] = [];
-    for (const card of useCombatStore.getState().hand) {
-      const def = CARDS[card.defId];
-      if (def?.keywords?.includes('retain')) retained.push(card);
-      else discarded.push(card);
-    }
-    useCombatStore.setState((s) => ({
-      hand: retained,
-      discardPile: [...s.discardPile, ...discarded],
-    }));
-
-    // Hallucination curse cards deal damage when in hand at end of turn
-    const handState = useCombatStore.getState().hand;
-    const halCards = handState.filter((c) => c.defId === 'hallucination');
+    // Hallucination curse cards deal damage BEFORE discarding hand
+    const preDiscardHand = useCombatStore.getState().hand;
+    const halCards = preDiscardHand.filter((c) => c.defId === 'hallucination');
     for (const halCard of halCards) {
       const grounded = useCombatStore.getState().playerStatus.find((s) => s.status === 'grounded');
       if (grounded && grounded.stacks > 0) {
@@ -559,6 +583,19 @@ export function CombatScreen() {
         exhaustPile: [...s.exhaustPile, halCard],
       }));
     }
+
+    // NOW discard hand (keep retain cards)
+    const retained: CardInstance[] = [];
+    const discarded: CardInstance[] = [];
+    for (const card of useCombatStore.getState().hand) {
+      const def = CARDS[card.defId];
+      if (def?.keywords?.includes('retain')) retained.push(card);
+      else discarded.push(card);
+    }
+    useCombatStore.setState((s) => ({
+      hand: retained,
+      discardPile: [...s.discardPile, ...discarded],
+    }));
 
     // Tick player debuffs
     for (const status of ['vulnerable', 'weak', 'confused', 'overfit'] as const) {
@@ -952,8 +989,16 @@ export function CombatScreen() {
           cardRewards={combat.cardRewards}
           onFinish={() => {
             run.addGold(combat.goldReward);
+            const runState = useRunStore.getState();
+            const currentNode = runState.map.flat().find((n) => n.id === runState.currentNodeId);
             combat.endCombat();
-            run.setScreen('map');
+            if (currentNode?.type === 'boss' && runState.act < 3) {
+              runState.advanceAct();
+            } else if (currentNode?.type === 'boss' && runState.act >= 3) {
+              runState.setScreen('victory');
+            } else {
+              run.setScreen('map');
+            }
           }}
           onPickCard={(defId) => {
             const inst = createCardInstance(defId);
@@ -962,7 +1007,67 @@ export function CombatScreen() {
         />
       )}
 
+      {/* First-draw card tip tooltip */}
+      {activeTip && (
+        <div
+          onClick={dismissTip}
+          style={{
+            position: 'absolute',
+            bottom: showHand ? 250 : 100,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 40,
+            background: 'rgba(12, 8, 24, 0.95)',
+            border: '3px solid #6b4fa0',
+            boxShadow:
+              'inset 0 0 0 2px #1a1130, inset 0 0 0 4px #3d2d5c, 0 0 30px rgba(107,79,160,0.5)',
+            padding: '16px 24px 12px',
+            maxWidth: 480,
+            textAlign: 'center',
+            cursor: 'pointer',
+            animation: 'tipFadeIn 0.3s ease-out',
+          }}
+        >
+          <div
+            style={{
+              fontFamily: "'Press Start 2P', monospace",
+              fontSize: 11,
+              color: '#a882ff',
+              marginBottom: 8,
+              letterSpacing: 1,
+            }}
+          >
+            {activeTip.split(':')[0]}
+          </div>
+          <div
+            style={{
+              fontFamily: 'monospace',
+              fontSize: 13,
+              color: '#c4b89a',
+              lineHeight: 1.5,
+              marginBottom: 10,
+            }}
+          >
+            {activeTip.includes(':') ? activeTip.slice(activeTip.indexOf(':') + 1).trim() : activeTip}
+          </div>
+          <div
+            style={{
+              fontFamily: "'Press Start 2P', monospace",
+              fontSize: 7,
+              color: '#6b7280',
+              letterSpacing: 1,
+            }}
+          >
+            CLICK TO DISMISS
+          </div>
+        </div>
+      )}
+
       <style>{`
+        @keyframes tipFadeIn {
+          0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+          100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
         @keyframes byteIdle {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-5px); }

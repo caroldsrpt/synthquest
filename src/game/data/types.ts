@@ -195,6 +195,12 @@ export interface RunState {
   cardRemovalCount: number;
   teachingTriggersShown: string[];
   completedScenarios: string[]; // scenario IDs completed this run
+  shownCardTips: string[];
+  deathContext?: {
+    enemyDefIds: string[];
+    turnsSurvived: number;
+    cardsInDeck: number;
+  };
   // Temporary per-combat event buffs
   nextCombatStatus?: { status: StatusType; stacks: number }[];
   nextCombatFirewall?: { amount: number; combatsLeft: number };

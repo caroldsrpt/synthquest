@@ -3,6 +3,7 @@ import type { RunState, GameScreen, CardInstance, MapNode } from '../game/data/t
 import { generateMap } from '../game/systems/MapGenerator';
 import { BASE_INTEGRITY, STARTING_GOLD, BASE_ENERGY, HAND_SIZE } from '../utils/constants';
 import { createStarterDeck } from '../utils/cardUtils';
+import { useCombatStore } from './combatStore';
 
 interface RunStore extends RunState {
   screen: GameScreen;
@@ -46,6 +47,7 @@ interface RunStore extends RunState {
   // Scenarios
   completeScenario: (scenarioId: string) => void;
   hasCompletedScenario: (scenarioId: string) => boolean;
+  markCardTipShown: (cardId: string) => void;
   currentScenarioId: string | null;
   setCurrentScenario: (id: string | null) => void;
 
@@ -69,6 +71,7 @@ const INITIAL_RUN: RunState = {
   cardRemovalCount: 0,
   teachingTriggersShown: [],
   completedScenarios: [],
+  shownCardTips: [],
 };
 
 export const useRunStore = create<RunStore>((set, get) => ({
@@ -95,7 +98,17 @@ export const useRunStore = create<RunStore>((set, get) => ({
     const newHp = Math.max(0, get().currentIntegrity - amount);
     set({ currentIntegrity: newHp });
     if (newHp <= 0) {
-      set({ active: false, screen: 'gameOver' });
+      // Snapshot combat state for the Game Over screen
+      const combatState = useCombatStore.getState();
+      set({
+        active: false,
+        screen: 'gameOver',
+        deathContext: {
+          enemyDefIds: combatState.enemies.map((e) => e.defId),
+          turnsSurvived: combatState.turn,
+          cardsInDeck: get().deck.length,
+        },
+      });
     }
   },
 
@@ -201,6 +214,10 @@ export const useRunStore = create<RunStore>((set, get) => ({
   },
 
   hasCompletedScenario: (scenarioId) => get().completedScenarios.includes(scenarioId),
+
+  markCardTipShown: (cardId: string) => set((s) => ({
+    shownCardTips: s.shownCardTips.includes(cardId) ? s.shownCardTips : [...s.shownCardTips, cardId],
+  })),
 
   getMaxEnergy: () => {
     const state = get();

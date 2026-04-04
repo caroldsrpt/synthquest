@@ -37,7 +37,20 @@ export function RestScreen() {
       border: '2px solid #333', borderRadius: 4,
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       padding: 24,
+      position: 'relative',
+      overflow: 'hidden',
     }}>
+      {/* Pixel art background */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        backgroundImage: 'url(/sprites/rest-bg.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        imageRendering: 'pixelated',
+        opacity: 0.3,
+        pointerEvents: 'none',
+      }} />
       <div style={{ fontSize: 24, marginBottom: 8 }}>{'\u2668'}</div>
       <h2 style={{ fontSize: 20, fontWeight: 'bold', margin: '0 0 4px', color: '#60a5fa' }}>Rest Site</h2>
       <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 24 }}>

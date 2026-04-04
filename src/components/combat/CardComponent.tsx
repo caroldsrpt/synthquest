@@ -9,6 +9,7 @@ const CATEGORY_ART: Record<string, string> = {
   logic: '/sprites/card-logic.png',
   vision: '/sprites/card-vision.png',
   noise: '/sprites/card-noise.png',
+  curse: '/sprites/card-curse.png',
 };
 
 const PX_OUTLINE_SM = [
