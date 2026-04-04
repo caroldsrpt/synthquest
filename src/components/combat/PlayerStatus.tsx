@@ -150,7 +150,7 @@ export function PlayerStatus({
 
 function getStatusDescription(status: string): string {
   switch (status) {
-    case 'hallucination': return 'Each stack has a 30% chance of dealing 3 damage to you at end of turn. Grounded blocks it.';
+    case 'hallucination': return 'Curse cards in your deck deal 3 damage when in hand at end of turn. Grounded blocks it.';
     case 'grounded': return 'Absorbs hallucination triggers. Each trigger removes 1 stack.';
     case 'context': return 'Adds bonus damage/firewall to your next card. Consumed after use.';
     case 'vulnerable': return 'Take 50% more damage. Wears off by 1 each turn.';

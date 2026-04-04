@@ -194,6 +194,7 @@ export const useRunStore = create<RunStore>((set, get) => ({
       currentNodeId: null,
       visitedNodeIds: [],
       floor: 0,
+      screen: 'map' as const,
     });
   },
 

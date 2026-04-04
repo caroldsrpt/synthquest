@@ -530,7 +530,7 @@ export function CombatScreen() {
         break;
       }
       case 'addRandomCards': {
-        const pool = Object.values(CARDS).filter((c) => c.rarity === effect.rarity && c.id !== 'intentMirror');
+        const pool = Object.values(CARDS).filter((c) => c.rarity === effect.rarity && c.id !== 'intentMirror' && c.rarity !== 'starter' && c.rarity !== 'curse');
         for (let i = 0; i < effect.count; i++) {
           if (pool.length === 0) break;
           const chosen = pool[Math.floor(Math.random() * pool.length)];
@@ -800,17 +800,23 @@ export function CombatScreen() {
       .reduce((sum, p) => sum + (p.amount || 0), 0);
 
     switch (intent.type) {
-      case 'attack': {
+      case 'attack':
+      case 'attackMulti': {
         let dmg = intent.damage;
         if (enemy.statusEffects.some((s) => s.status === 'weak')) dmg = Math.floor(dmg * 0.75);
         if (reduceAmount > 0) dmg = Math.max(0, dmg - reduceAmount);
-        setEnemyHit(enemy.id); // enemy lunges
+        const hits = intent.type === 'attackMulti' ? (intent.times || 1) : 1;
+        setEnemyHit(enemy.id);
         setTimeout(() => setEnemyHit(null), 300);
-        const actual = combat.takeDamage(dmg);
-        run.takeDamage(actual);
-        showPlayerHit(actual);
-        setMessage(`${name} attacks for ${dmg}!`);
-        combat.addLog(`${name} attacks for ${dmg}`);
+        let totalDmg = 0;
+        for (let i = 0; i < hits; i++) {
+          const actual = combat.takeDamage(dmg);
+          run.takeDamage(actual);
+          totalDmg += actual;
+        }
+        showPlayerHit(totalDmg);
+        setMessage(`${name} attacks for ${dmg}${hits > 1 ? ` x${hits}` : ''}!`);
+        combat.addLog(`${name} attacks for ${dmg}${hits > 1 ? ` x${hits}` : ''}`);
         break;
       }
       case 'attackDebuff': {
