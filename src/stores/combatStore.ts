@@ -148,6 +148,22 @@ export const useCombatStore = create<CombatStore>((set, get) => ({
       }
     }
     get().drawCards(HAND_SIZE + extraDraw);
+
+    // Apply Confused: for each stack, randomize 1 card's energy cost (0-3)
+    const postDrawState = get();
+    const confused = postDrawState.playerStatus.find((s) => s.status === 'confused');
+    if (confused && confused.stacks > 0 && postDrawState.hand.length > 0) {
+      const newHand = [...postDrawState.hand];
+      const cardsToRandomize = Math.min(confused.stacks, newHand.length);
+      const indices = new Set<number>();
+      while (indices.size < cardsToRandomize) {
+        indices.add(Math.floor(Math.random() * newHand.length));
+      }
+      for (const idx of indices) {
+        newHand[idx] = { ...newHand[idx], costOverride: Math.floor(Math.random() * 4) };
+      }
+      set({ hand: newHand });
+    }
   },
 
   endPlayerTurn: () => {

@@ -430,6 +430,11 @@ export function CombatScreen() {
     const contextBonus = state.playerStatus.find((s) => s.status === 'context')?.stacks || 0;
     let consumeContext = false;
 
+    // Overfit: repeated card plays this turn deal halved damage
+    const overfitStacks = state.playerStatus.find((s) => s.status === 'overfit')?.stacks || 0;
+    const priorPlays = state.cardsPlayedThisTurn.filter((id) => id === card.defId).length;
+    const isRepeatCard = overfitStacks > 0 && priorPlays > 1;
+
     switch (effect.type) {
       case 'damage': {
         const target = targetEnemyId || state.enemies.find((e) => e.hp > 0)?.id;
@@ -439,6 +444,7 @@ export function CombatScreen() {
         const enemy = state.enemies.find((e) => e.id === target);
         if (enemy?.statusEffects.some((s) => s.status === 'vulnerable')) dmg = Math.floor(dmg * 1.5);
         if (state.playerStatus.some((s) => s.status === 'weak')) dmg = Math.floor(dmg * 0.75);
+        if (isRepeatCard) dmg = Math.floor(dmg * 0.5);
         const times = effect.times || 1;
         showPlayerAttack();
         for (let i = 0; i < times; i++) combat.damageEnemy(target, dmg);
@@ -865,11 +871,11 @@ export function CombatScreen() {
   function getDebuffDescription(status: string, stacks: number): string {
     switch (status) {
       case 'hallucination': return `Hallucination x${stacks}! (Shuffles ${stacks} curse card${stacks > 1 ? 's' : ''} into your deck — deals 3 damage when in hand)`;
-      case 'confused': return `Confused x${stacks}! (Random card costs change)`;
+      case 'confused': return `Confused x${stacks}! (Each stack randomizes 1 card's energy cost at start of turn)`;
       case 'vulnerable': return `Vulnerable x${stacks}! (Take 50% more damage)`;
       case 'weak': return `Weak x${stacks}! (Deal 25% less damage)`;
       case 'throttled': return `Throttled x${stacks}! (Reduced energy)`;
-      case 'overfit': return `Overfit x${stacks}!`;
+      case 'overfit': return `Overfit x${stacks}! (Playing the same card twice halves its damage)`;
       default: return `${status} x${stacks}`;
     }
   }
