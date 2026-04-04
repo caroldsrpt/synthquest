@@ -1,7 +1,7 @@
 // === Card Types ===
 
-export type CardCategory = 'text' | 'structure' | 'logic' | 'vision' | 'noise';
-export type CardRarity = 'starter' | 'common' | 'uncommon' | 'rare';
+export type CardCategory = 'text' | 'structure' | 'logic' | 'vision' | 'noise' | 'curse';
+export type CardRarity = 'starter' | 'common' | 'uncommon' | 'rare' | 'curse';
 export type CardTarget = 'singleEnemy' | 'allEnemies' | 'self' | 'none';
 
 export interface CardDef {

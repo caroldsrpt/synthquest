@@ -28,9 +28,10 @@ interface EnemyDisplayProps {
   onClick: (id: string) => void;
   isHit?: boolean;
   floats?: { text: string; color: string; id: number }[];
+  hallucinationLabel?: string;
 }
 
-export function EnemyDisplay({ enemy, targeting, onClick, isHit, floats }: EnemyDisplayProps) {
+export function EnemyDisplay({ enemy, targeting, onClick, isHit, floats, hallucinationLabel }: EnemyDisplayProps) {
   const def = ENEMIES[enemy.defId];
   if (!def) return null;
 
@@ -73,7 +74,7 @@ export function EnemyDisplay({ enemy, targeting, onClick, isHit, floats }: Enemy
           textShadow: PX_OUTLINE_SM,
         }}>
           <span>{intentIcon}</span>
-          <span>{getIntentText(enemy.currentIntent)}</span>
+          <span>{getIntentText(enemy.currentIntent, hallucinationLabel)}</span>
         </div>
       )}
 
@@ -257,14 +258,16 @@ function getIntentColor(intent: EnemyInstance['currentIntent']): string {
   }
 }
 
-function getIntentText(intent: EnemyInstance['currentIntent']): string {
+function getIntentText(intent: EnemyInstance['currentIntent'], halLabel?: string): string {
+  const resolveName = (status: string) =>
+    status === 'hallucination' && halLabel ? halLabel : getStatusFullName(status);
   switch (intent.type) {
     case 'attack': return `ATK ${intent.damage}`;
     case 'attackMulti': return `ATK ${intent.damage}x${intent.times}`;
     case 'defend': return `DEF ${intent.firewall}`;
     case 'buff': return 'Buff';
-    case 'debuff': return `${getStatusFullName(intent.status)} x${intent.stacks}`;
-    case 'attackDebuff': return `ATK ${intent.damage} + ${getStatusFullName(intent.status)}`;
+    case 'debuff': return `${resolveName(intent.status)} x${intent.stacks}`;
+    case 'attackDebuff': return `ATK ${intent.damage} + ${resolveName(intent.status)}`;
     case 'unknown': return '???';
   }
 }

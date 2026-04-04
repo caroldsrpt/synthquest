@@ -22,6 +22,7 @@ interface CombatStore extends CombatState {
   exhaustCard: (handIndex: number) => void;
   addToHand: (card: CardInstance) => void;
   addToDiscard: (card: CardInstance) => void;
+  shuffleIntoDraw: (card: CardInstance) => void;
 
   // Energy
   spendEnergy: (amount: number) => boolean;
@@ -72,7 +73,7 @@ const INITIAL_STATE: CombatState = {
   totalDamageDealtThisTurn: 0,
   totalFirewallGainedThisTurn: 0,
   cardsPlayedThisTurn: [],
-  categoryCountThisTurn: { text: 0, structure: 0, logic: 0, vision: 0, noise: 0 },
+  categoryCountThisTurn: { text: 0, structure: 0, logic: 0, vision: 0, noise: 0, curse: 0 },
   goldReward: 0,
   cardRewards: [],
   relicReward: null,
@@ -112,7 +113,7 @@ export const useCombatStore = create<CombatStore>((set, get) => ({
       totalDamageDealtThisTurn: 0,
       totalFirewallGainedThisTurn: 0,
       cardsPlayedThisTurn: [],
-      categoryCountThisTurn: { text: 0, structure: 0, logic: 0, vision: 0, noise: 0 },
+      categoryCountThisTurn: { text: 0, structure: 0, logic: 0, vision: 0, noise: 0, curse: 0 },
       lastCardPlayedId: null,
       // Remove throttled after applying
       playerStatus: state.playerStatus.filter((s) => s.status !== 'throttled'),
@@ -200,6 +201,12 @@ export const useCombatStore = create<CombatStore>((set, get) => ({
   addToHand: (card) => set((s) => ({ hand: [...s.hand, card] })),
 
   addToDiscard: (card) => set((s) => ({ discardPile: [...s.discardPile, card] })),
+  shuffleIntoDraw: (card) => set((s) => {
+    const draw = [...s.drawPile];
+    const idx = Math.floor(Math.random() * (draw.length + 1));
+    draw.splice(idx, 0, card);
+    return { drawPile: draw };
+  }),
 
   spendEnergy: (amount) => {
     const state = get();

@@ -291,6 +291,14 @@ export const CARDS: Record<string, CardDef> = {
     upgraded: { description: 'Deal exhausted cards x4 to ALL. Exhaust.', effects: [{ type: 'damagePerExhaust', multiplier: 4 }] },
   },
 
+  // ============ CURSE CARDS ============
+  hallucination: {
+    id: 'hallucination', name: 'Glitch', category: 'curse', rarity: 'curse', cost: 0,
+    target: 'self', act: 1,
+    description: 'CURSE. Cannot be played. Deals 3 damage at end of turn, then exhausts.',
+    effects: [{ type: 'damage', amount: 3 }],
+  },
+
   // ============ TEMPORARY CARDS ============
   intentMirror: {
     id: 'intentMirror', name: 'Intent Mirror', category: 'logic', rarity: 'common', cost: 0,

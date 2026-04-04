@@ -66,11 +66,13 @@ export const COLORS = {
     logic: '#f472b6',
     vision: '#fbbf24',
     noise: '#34d399',
+    curse: '#ef4444',
   } as Record<string, string>,
   rarity: {
     starter: '#9ca3af',
     common: '#e0e0e0',
     uncommon: '#60a5fa',
     rare: '#fbbf24',
+    curse: '#ef4444',
   } as Record<string, string>,
 } as const;

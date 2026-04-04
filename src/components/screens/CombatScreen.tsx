@@ -65,6 +65,13 @@ export function CombatScreen() {
     debuffed: '/sprites/byte-hurt.png',
   };
 
+  // Use "Glitch" before S3 teaches hallucination, "Hallucination" after
+  const hasLearnedHallucination = run.completedScenarios?.includes('s3_hallucination') ?? false;
+  const curseName = hasLearnedHallucination ? 'Hallucination' : 'Glitch';
+  const curseDesc = hasLearnedHallucination
+    ? 'Deals 3 damage when in hand at end of turn'
+    : 'Corrupts your hand — deals 3 damage at end of turn';
+
   // Auto-start first turn
   useEffect(() => {
     if (combat.active && combat.phase === 'start') {
@@ -85,6 +92,8 @@ export function CombatScreen() {
     if (!card) return;
     const def = CARDS[card.defId];
     if (!def) return;
+    // Curse cards can't be played
+    if (def.category === 'curse') return;
     const cost = getCardCost(card);
     if (cost > combat.energy) return;
 
@@ -270,19 +279,24 @@ export function CombatScreen() {
       discardPile: [...s.discardPile, ...discarded],
     }));
 
-    // Hallucination self-damage
-    const halStacks = useCombatStore.getState().playerStatus.find((s) => s.status === 'hallucination')?.stacks || 0;
-    for (let i = 0; i < halStacks; i++) {
-      if (Math.random() < HALLUCINATION_TRIGGER_CHANCE) {
-        const grounded = useCombatStore.getState().playerStatus.find((s) => s.status === 'grounded');
-        if (grounded && grounded.stacks > 0) {
-          combat.removePlayerStatus('grounded', 1);
-          combat.addLog('Grounded absorbed hallucination!');
-        } else {
-          run.takeDamage(HALLUCINATION_SELF_DAMAGE);
-          combat.addLog(`Hallucination dealt ${HALLUCINATION_SELF_DAMAGE} to you!`);
-        }
+    // Hallucination curse cards deal damage when in hand at end of turn
+    const handState = useCombatStore.getState().hand;
+    const halCards = handState.filter((c) => c.defId === 'hallucination');
+    for (const halCard of halCards) {
+      const grounded = useCombatStore.getState().playerStatus.find((s) => s.status === 'grounded');
+      if (grounded && grounded.stacks > 0) {
+        combat.removePlayerStatus('grounded', 1);
+        combat.addLog('Grounded absorbed a Hallucination card!');
+      } else {
+        run.takeDamage(HALLUCINATION_SELF_DAMAGE);
+        showPlayerHit(HALLUCINATION_SELF_DAMAGE);
+        combat.addLog(`Hallucination card dealt ${HALLUCINATION_SELF_DAMAGE} damage!`);
       }
+      // Exhaust the hallucination card after it triggers
+      useCombatStore.setState((s) => ({
+        hand: s.hand.filter((c) => c.id !== halCard.id),
+        exhaustPile: [...s.exhaustPile, halCard],
+      }));
     }
 
     // Tick player debuffs
@@ -303,8 +317,11 @@ export function CombatScreen() {
 
     // Execute enemy intents
     for (const enemy of useCombatStore.getState().enemies.filter((e) => e.hp > 0)) {
+      const intent = enemy.currentIntent;
       executeEnemyIntent(enemy);
-      await new Promise((r) => setTimeout(r, 1200));
+      // Debuffs and attackDebuffs need more reading time
+      const isDebuff = intent.type === 'debuff' || intent.type === 'attackDebuff';
+      await new Promise((r) => setTimeout(r, isDebuff ? 2500 : 1200));
     }
 
     // Advance enemy intents
@@ -376,11 +393,16 @@ export function CombatScreen() {
         const actual = combat.takeDamage(dmg);
         run.takeDamage(actual);
         showPlayerHit(actual);
-        setTimeout(() => {
-          showPlayerDebuffed(intent.status);
-        }, 400);
-        combat.addPlayerStatus({ status: intent.status, stacks: intent.stacks });
-        setMessage(`${name} attacks for ${dmg} + ${getDebuffDescription(intent.status, intent.stacks)}`);
+        setTimeout(() => showPlayerDebuffed(intent.status), 400);
+        if (intent.status === 'hallucination') {
+          for (let i = 0; i < intent.stacks; i++) {
+            combat.shuffleIntoDraw(createCardInstance('hallucination'));
+          }
+          setMessage(`${name} attacks for ${dmg} + shuffles ${intent.stacks} ${curseName} card${intent.stacks > 1 ? 's' : ''} into your deck!`);
+        } else {
+          combat.addPlayerStatus({ status: intent.status, stacks: intent.stacks });
+          setMessage(`${name} attacks for ${dmg} + ${getDebuffDescription(intent.status, intent.stacks)}`);
+        }
         combat.addLog(`${name} attacks for ${dmg} + ${intent.status}`);
         break;
       }
@@ -399,17 +421,27 @@ export function CombatScreen() {
         combat.addLog(`${name} buffs itself`);
         break;
       case 'debuff':
-        combat.addPlayerStatus({ status: intent.status, stacks: intent.stacks });
-        showPlayerDebuffed(intent.status);
-        setMessage(`${name} applies ${getDebuffDescription(intent.status, intent.stacks)}`);
-        combat.addLog(`${name} applies ${intent.status}`);
+        if (intent.status === 'hallucination') {
+          // Shuffle curse cards into draw pile
+          for (let i = 0; i < intent.stacks; i++) {
+            combat.shuffleIntoDraw(createCardInstance('hallucination'));
+          }
+          showPlayerDebuffed(curseName);
+          setMessage(`${name} shuffles ${intent.stacks} ${curseName} card${intent.stacks > 1 ? 's' : ''} into your deck! (${curseDesc})`);
+          combat.addLog(`${name} adds ${intent.stacks} ${curseName} cards`);
+        } else {
+          combat.addPlayerStatus({ status: intent.status, stacks: intent.stacks });
+          showPlayerDebuffed(intent.status);
+          setMessage(`${name} applies ${getDebuffDescription(intent.status, intent.stacks)}`);
+          combat.addLog(`${name} applies ${intent.status}`);
+        }
         break;
     }
   }, [combat, run]);
 
   function getDebuffDescription(status: string, stacks: number): string {
     switch (status) {
-      case 'hallucination': return `Hallucination x${stacks}! (${stacks * 30}% chance of 3 self-damage each turn)`;
+      case 'hallucination': return `Hallucination x${stacks}! (Shuffles ${stacks} curse card${stacks > 1 ? 's' : ''} into your deck — deals 3 damage when in hand)`;
       case 'confused': return `Confused x${stacks}! (Random card costs change)`;
       case 'vulnerable': return `Vulnerable x${stacks}! (Take 50% more damage)`;
       case 'weak': return `Weak x${stacks}! (Deal 25% less damage)`;
@@ -539,6 +571,7 @@ export function CombatScreen() {
               onClick={handleTargetEnemy}
               isHit={enemyHit === enemy.id}
               floats={floats.filter((f) => f.target === enemy.id)}
+              hallucinationLabel={curseName}
             />
           ))}
         </div>
