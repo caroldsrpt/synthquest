@@ -5,6 +5,7 @@ import { CombatScreen } from './components/screens/CombatScreen';
 import { RestScreen } from './components/screens/RestScreen';
 import { ScenarioScreen } from './components/screens/ScenarioScreen';
 import { GameOverScreen, VictoryScreen } from './components/screens/GameOverScreen';
+import { ShopScreen } from './components/screens/ShopScreen';
 
 function App() {
   const screen = useRunStore((s) => s.screen);
@@ -19,7 +20,7 @@ function App() {
       {screen === 'gameOver' && <GameOverScreen />}
       {screen === 'victory' && <VictoryScreen />}
       {screen === 'event' && <PlaceholderScreen label="Event" />}
-      {screen === 'shop' && <PlaceholderScreen label="Shop" />}
+      {screen === 'shop' && <ShopScreen />}
       {screen === 'knowledgeBase' && <PlaceholderScreen label="Knowledge Base" />}
     </div>
   );

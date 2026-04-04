@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useCombatStore } from '../../stores/combatStore';
 import { useRunStore } from '../../stores/runStore';
 import { CARDS } from '../../game/data/cards';
@@ -9,7 +9,219 @@ import { randInt } from '../../utils/random';
 import { HandDisplay } from '../combat/HandDisplay';
 import { EnemyDisplay } from '../combat/EnemyDisplay';
 import { PlayerStatus } from '../combat/PlayerStatus';
+import { CardComponent } from '../combat/CardComponent';
 import type { CardInstance, CardEffect, EnemyInstance } from '../../game/data/types';
+
+type RewardStep = 'gold' | 'cards' | 'done';
+
+function RewardOverlay({
+  goldReward,
+  cardRewards,
+  onFinish,
+  onPickCard,
+}: {
+  goldReward: number;
+  cardRewards: import('../../game/data/types').CardDef[];
+  onFinish: () => void;
+  onPickCard: (defId: string) => void;
+}) {
+  const [step, setStep] = useState<RewardStep>('gold');
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [pickedIndex, setPickedIndex] = useState<number | null>(null);
+
+  // Create stable CardInstance objects for rendering via CardComponent
+  const rewardInstances = useMemo(
+    () => cardRewards.map((def) => createCardInstance(def.id)),
+    [cardRewards],
+  );
+
+  const handlePickCard = (index: number) => {
+    if (pickedIndex !== null) return;
+    setPickedIndex(index);
+    onPickCard(cardRewards[index].id);
+    // Brief delay so the player sees which card they picked before showing Continue
+    setTimeout(() => setStep('done'), 400);
+  };
+
+  const handleSkip = () => {
+    setStep('done');
+  };
+
+  const panelStyle: React.CSSProperties = {
+    background: 'rgba(12, 8, 24, 0.95)',
+    border: '3px solid #6b4fa0',
+    boxShadow:
+      'inset 0 0 0 2px #1a1130, inset 0 0 0 4px #3d2d5c, 0 0 40px rgba(107,79,160,0.4)',
+    padding: '40px 60px',
+    textAlign: 'center',
+    fontFamily: "'Press Start 2P', monospace",
+    maxWidth: '90vw',
+  };
+
+  const btnStyle: React.CSSProperties = {
+    padding: '14px 36px',
+    background: 'rgba(12, 8, 24, 0.85)',
+    border: '3px solid #6b4fa0',
+    boxShadow: 'inset 0 0 0 2px #1a1130, inset 0 0 0 4px #3d2d5c',
+    color: '#c4b89a',
+    fontFamily: "'Press Start 2P', monospace",
+    fontSize: 14,
+    cursor: 'pointer',
+    letterSpacing: 2,
+  };
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        inset: 0,
+        background: 'rgba(0, 0, 0, 0.7)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 50,
+      }}
+    >
+      <div style={panelStyle}>
+        {/* VICTORY heading — always visible */}
+        <div
+          style={{
+            fontSize: 28,
+            fontWeight: 'bold',
+            color: '#4ade80',
+            textShadow:
+              '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 0 20px rgba(74,222,128,0.5)',
+            marginBottom: 16,
+            letterSpacing: 3,
+          }}
+        >
+          VICTORY!
+        </div>
+
+        {/* Gold reward — always visible */}
+        <div
+          style={{
+            fontSize: 16,
+            color: '#fbbf24',
+            textShadow:
+              '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000',
+            marginBottom: 24,
+          }}
+        >
+          + {goldReward} Gold
+        </div>
+
+        {/* Step: gold — show button to proceed to card pick */}
+        {step === 'gold' && cardRewards.length > 0 && (
+          <button onClick={() => setStep('cards')} style={btnStyle}>
+            Choose a Card
+          </button>
+        )}
+
+        {/* Step: gold — no card rewards, go straight to map */}
+        {step === 'gold' && cardRewards.length === 0 && (
+          <button onClick={onFinish} style={btnStyle}>
+            Continue to Map
+          </button>
+        )}
+
+        {/* Step: cards — show 3 card choices */}
+        {step === 'cards' && (
+          <>
+            <div
+              style={{
+                fontSize: 12,
+                color: '#a882ff',
+                marginBottom: 20,
+                letterSpacing: 1,
+              }}
+            >
+              Pick a card to add to your deck
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                gap: 24,
+                justifyContent: 'center',
+                marginBottom: 24,
+              }}
+            >
+              {rewardInstances.map((inst, i) => (
+                <div
+                  key={inst.id}
+                  onMouseEnter={() => setHoveredIndex(i)}
+                  onMouseLeave={() => setHoveredIndex(null)}
+                  style={{
+                    transition: 'transform 0.2s, filter 0.2s',
+                    transform:
+                      hoveredIndex === i
+                        ? 'translateY(-12px) scale(1.08)'
+                        : pickedIndex === i
+                          ? 'translateY(-8px) scale(1.05)'
+                          : 'none',
+                    filter:
+                      hoveredIndex === i
+                        ? 'drop-shadow(0 0 16px #a882ff) drop-shadow(0 0 8px #6b4fa0)'
+                        : pickedIndex === i
+                          ? 'drop-shadow(0 0 20px #4ade80)'
+                          : 'none',
+                    opacity: pickedIndex !== null && pickedIndex !== i ? 0.4 : 1,
+                    cursor: pickedIndex === null ? 'pointer' : 'default',
+                  }}
+                >
+                  <CardComponent
+                    card={inst}
+                    index={i}
+                    selected={pickedIndex === i}
+                    playable={pickedIndex === null}
+                    onClick={() => handlePickCard(i)}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {pickedIndex === null && (
+              <button
+                onClick={handleSkip}
+                style={{
+                  ...btnStyle,
+                  fontSize: 10,
+                  padding: '10px 24px',
+                  border: '2px solid #3d2d5c',
+                  color: '#6b7280',
+                }}
+              >
+                Skip
+              </button>
+            )}
+          </>
+        )}
+
+        {/* Step: done — show continue */}
+        {step === 'done' && (
+          <>
+            {pickedIndex !== null && (
+              <div
+                style={{
+                  fontSize: 11,
+                  color: '#4ade80',
+                  marginBottom: 20,
+                  letterSpacing: 1,
+                }}
+              >
+                Added {cardRewards[pickedIndex]?.name || 'card'} to your deck!
+              </div>
+            )}
+            <button onClick={onFinish} style={btnStyle}>
+              Continue to Map
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export function CombatScreen() {
   const combat = useCombatStore();
@@ -94,7 +306,12 @@ export function CombatScreen() {
     if (!def) return;
     // Curse cards can't be played
     if (def.category === 'curse') return;
-    const cost = getCardCost(card);
+
+    // firstCardFree power: first card played each turn costs 0
+    const state = useCombatStore.getState();
+    const hasFirstCardFree = state.activePowers.some((p) => p.type === 'firstCardFree');
+    const isFirstCard = state.cardsPlayedThisTurn.length === 0;
+    const cost = (hasFirstCardFree && isFirstCard) ? 0 : getCardCost(card);
     if (cost > combat.energy) return;
 
     if (def.target === 'singleEnemy') {
@@ -114,7 +331,12 @@ export function CombatScreen() {
     if (!card) return;
     const def = CARDS[card.defId];
     if (!def) return;
-    const cost = getCardCost(card);
+
+    // firstCardFree power: first card played each turn costs 0
+    const prePlayState = useCombatStore.getState();
+    const hasFirstCardFree = prePlayState.activePowers.some((p) => p.type === 'firstCardFree');
+    const isFirstCard = prePlayState.cardsPlayedThisTurn.length === 0;
+    const cost = (hasFirstCardFree && isFirstCard) ? 0 : getCardCost(card);
     if (!combat.spendEnergy(cost)) return;
 
     const effects = getCardEffects(card);
@@ -127,11 +349,30 @@ export function CombatScreen() {
       resolveEffect(effect, card, targetEnemyId);
     }
 
+    // attackSplash power: when playing an attack card, deal X damage to all OTHER enemies
+    const isAttackCard = effects.some((e) =>
+      e.type === 'damage' || e.type === 'damageRandom' || e.type === 'damageAll'
+      || e.type === 'conditionalDamage' || e.type === 'damagePerExhaust'
+    );
+    if (isAttackCard) {
+      const splashState = useCombatStore.getState();
+      for (const power of splashState.activePowers) {
+        if (power.type === 'attackSplash' && power.amount) {
+          for (const enemy of splashState.enemies) {
+            if (enemy.hp > 0 && enemy.id !== targetEnemyId) {
+              combat.damageEnemy(enemy.id, power.amount);
+              showEnemyHit(enemy.id, power.amount);
+            }
+          }
+        }
+      }
+    }
+
     // Remove from hand
     combat.playCard(handIndex, targetEnemyId);
 
-    // Handle exhaust vs discard
-    if (def.keywords?.includes('exhaust')) {
+    // Handle exhaust vs discard (power cards always exhaust)
+    if (def.keywords?.includes('exhaust') || def.keywords?.includes('power')) {
       useCombatStore.setState((s) => ({
         exhaustPile: [...s.exhaustPile, card],
       }));
@@ -256,6 +497,26 @@ export function CombatScreen() {
         }
         break;
       }
+      case 'power_blockPerTurn':
+        combat.addPower({ type: 'blockPerTurn', amount: effect.amount });
+        combat.addLog(`Gained Power: +${effect.amount} Firewall/turn`);
+        break;
+      case 'power_drawPerTurn':
+        combat.addPower({ type: 'drawPerTurn', amount: effect.amount });
+        combat.addLog(`Gained Power: +${effect.amount} Draw/turn`);
+        break;
+      case 'power_reduceDamage':
+        combat.addPower({ type: 'reduceDamage', amount: effect.amount });
+        combat.addLog(`Gained Power: -${effect.amount} incoming damage per hit`);
+        break;
+      case 'power_firstCardFree':
+        combat.addPower({ type: 'firstCardFree' });
+        combat.addLog('Gained Power: First card each turn costs 0');
+        break;
+      case 'power_attackSplash':
+        combat.addPower({ type: 'attackSplash', amount: effect.amount });
+        combat.addLog(`Gained Power: Attacks splash ${effect.amount} damage to all enemies`);
+        break;
     }
 
     if (consumeContext && contextBonus > 0) {
@@ -372,10 +633,16 @@ export function CombatScreen() {
     const def = ENEMIES[enemy.defId];
     const name = def?.name || 'Enemy';
 
+    // Calculate total reduceDamage from active powers
+    const reduceAmount = useCombatStore.getState().activePowers
+      .filter((p) => p.type === 'reduceDamage')
+      .reduce((sum, p) => sum + (p.amount || 0), 0);
+
     switch (intent.type) {
       case 'attack': {
         let dmg = intent.damage;
         if (enemy.statusEffects.some((s) => s.status === 'weak')) dmg = Math.floor(dmg * 0.75);
+        if (reduceAmount > 0) dmg = Math.max(0, dmg - reduceAmount);
         setEnemyHit(enemy.id); // enemy lunges
         setTimeout(() => setEnemyHit(null), 300);
         const actual = combat.takeDamage(dmg);
@@ -388,6 +655,7 @@ export function CombatScreen() {
       case 'attackDebuff': {
         let dmg = intent.damage;
         if (enemy.statusEffects.some((s) => s.status === 'weak')) dmg = Math.floor(dmg * 0.75);
+        if (reduceAmount > 0) dmg = Math.max(0, dmg - reduceAmount);
         setEnemyHit(enemy.id);
         setTimeout(() => setEnemyHit(null), 300);
         const actual = combat.takeDamage(dmg);
@@ -609,6 +877,7 @@ export function CombatScreen() {
         drawPileCount={combat.drawPile.length}
         discardPileCount={combat.discardPile.length}
         exhaustPileCount={combat.exhaustPile.length}
+        activePowers={combat.activePowers}
       />
 
       {/* Hand + controls area */}
@@ -678,63 +947,19 @@ export function CombatScreen() {
 
       {/* Victory overlay — center screen */}
       {combat.phase === 'reward' && (
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          background: 'rgba(0, 0, 0, 0.7)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 50,
-        }}>
-          <div style={{
-            background: 'rgba(12, 8, 24, 0.95)',
-            border: '3px solid #6b4fa0',
-            boxShadow: 'inset 0 0 0 2px #1a1130, inset 0 0 0 4px #3d2d5c, 0 0 40px rgba(107,79,160,0.4)',
-            padding: '40px 60px',
-            textAlign: 'center',
-            fontFamily: "'Press Start 2P', monospace",
-          }}>
-            <div style={{
-              fontSize: 28,
-              fontWeight: 'bold',
-              color: '#4ade80',
-              textShadow: '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 0 20px rgba(74,222,128,0.5)',
-              marginBottom: 16,
-              letterSpacing: 3,
-            }}>
-              VICTORY!
-            </div>
-            <div style={{
-              fontSize: 16,
-              color: '#fbbf24',
-              textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000',
-              marginBottom: 32,
-            }}>
-              + {combat.goldReward} Gold
-            </div>
-            <button
-              onClick={() => {
-                run.addGold(combat.goldReward);
-                combat.endCombat();
-                run.setScreen('map');
-              }}
-              style={{
-                padding: '14px 36px',
-                background: 'rgba(12, 8, 24, 0.85)',
-                border: '3px solid #6b4fa0',
-                boxShadow: 'inset 0 0 0 2px #1a1130, inset 0 0 0 4px #3d2d5c',
-                color: '#c4b89a',
-                fontFamily: "'Press Start 2P', monospace",
-                fontSize: 14,
-                cursor: 'pointer',
-                letterSpacing: 2,
-              }}
-            >
-              Continue to Map
-            </button>
-          </div>
-        </div>
+        <RewardOverlay
+          goldReward={combat.goldReward}
+          cardRewards={combat.cardRewards}
+          onFinish={() => {
+            run.addGold(combat.goldReward);
+            combat.endCombat();
+            run.setScreen('map');
+          }}
+          onPickCard={(defId) => {
+            const inst = createCardInstance(defId);
+            run.addCardToDeck(inst);
+          }}
+        />
       )}
 
       <style>{`

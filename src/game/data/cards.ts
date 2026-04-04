@@ -306,12 +306,49 @@ export const CARDS: Record<string, CardDef> = {
     description: 'Mirrored enemy intent. Deal 5 damage.',
     effects: [{ type: 'damage', amount: 5 }],
   },
+
+  // ============ POWER CARDS ============
+  monitoring: {
+    id: 'monitoring', name: 'Monitoring', category: 'structure', rarity: 'uncommon', cost: 1,
+    target: 'self', act: 1, keywords: ['power'],
+    description: 'POWER. Gain 3 Block at the start of each turn.',
+    effects: [{ type: 'power_blockPerTurn', amount: 3 }],
+    upgraded: { description: 'POWER. Gain 5 Block at the start of each turn.', effects: [{ type: 'power_blockPerTurn', amount: 5 }] },
+  },
+  autoCompletePower: {
+    id: 'autoCompletePower', name: 'Auto-Complete', category: 'text', rarity: 'uncommon', cost: 1,
+    target: 'self', act: 1, keywords: ['power'],
+    description: 'POWER. Draw 1 additional card each turn.',
+    effects: [{ type: 'power_drawPerTurn', amount: 1 }],
+    upgraded: { description: 'POWER. Draw 2 additional cards each turn.', effects: [{ type: 'power_drawPerTurn', amount: 2 }] },
+  },
+  rateLimiter: {
+    id: 'rateLimiter', name: 'Rate Limiter', category: 'structure', rarity: 'rare', cost: 2,
+    target: 'self', act: 2, keywords: ['power'],
+    description: 'POWER. Enemies deal 1 less damage per hit.',
+    effects: [{ type: 'power_reduceDamage', amount: 1 }],
+    upgraded: { description: 'POWER. Enemies deal 2 less damage per hit.', effects: [{ type: 'power_reduceDamage', amount: 2 }] },
+  },
+  batchProcessing: {
+    id: 'batchProcessing', name: 'Batch Processing', category: 'logic', rarity: 'uncommon', cost: 1,
+    target: 'self', act: 2, keywords: ['power'],
+    description: 'POWER. First card you play each turn costs 0.',
+    effects: [{ type: 'power_firstCardFree' }],
+    upgraded: { cost: 0, description: 'POWER. First card you play each turn costs 0.' },
+  },
+  ensembleModel: {
+    id: 'ensembleModel', name: 'Ensemble Model', category: 'logic', rarity: 'rare', cost: 3,
+    target: 'self', act: 3, keywords: ['power'],
+    description: 'POWER. When you play an Attack, deal 3 damage to ALL enemies.',
+    effects: [{ type: 'power_attackSplash', amount: 3 }],
+    upgraded: { description: 'POWER. When you play an Attack, deal 5 damage to ALL enemies.', effects: [{ type: 'power_attackSplash', amount: 5 }] },
+  },
 };
 
 // Helper: get all non-starter, non-temp cards available in a given act
 export function getCardPool(act: 1 | 2 | 3): CardDef[] {
   return Object.values(CARDS).filter(
-    (c) => c.rarity !== 'starter' && c.id !== 'intentMirror' && c.act <= act
+    (c) => c.rarity !== 'starter' && c.rarity !== 'curse' && c.id !== 'intentMirror' && c.act <= act
   );
 }
 

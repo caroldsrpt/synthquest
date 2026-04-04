@@ -20,37 +20,37 @@ export const ENEMIES: Record<string, EnemyDef> = {
     intentPattern: 'cycle',
   },
   promptInjector: {
-    id: 'promptInjector', name: 'Prompt Injector', type: 'elite', baseHp: 55, acts: [1],
+    id: 'promptInjector', name: 'Prompt Injector', type: 'elite', baseHp: 70, acts: [1],
     intentPattern: 'cycle',
   },
   confabulator: {
-    id: 'confabulator', name: 'The Confabulator', type: 'boss', baseHp: 80, acts: [1],
+    id: 'confabulator', name: 'The Confabulator', type: 'boss', baseHp: 160, acts: [1],
     intentPattern: 'ai',
   },
 
   // Act 2
   timeoutError: {
-    id: 'timeoutError', name: 'Timeout Error', type: 'normal', baseHp: 20, acts: [2],
+    id: 'timeoutError', name: 'Timeout Error', type: 'normal', baseHp: 26, acts: [2],
     intentPattern: 'cycle',
   },
   dataSilo: {
-    id: 'dataSilo', name: 'Data Silo', type: 'normal', baseHp: 40, baseFirewall: 15, acts: [2],
+    id: 'dataSilo', name: 'Data Silo', type: 'normal', baseHp: 52, baseFirewall: 15, acts: [2],
     intentPattern: 'cycle',
   },
   ghostEndpoint: {
-    id: 'ghostEndpoint', name: 'Ghost Endpoint', type: 'normal', baseHp: 30, acts: [2],
+    id: 'ghostEndpoint', name: 'Ghost Endpoint', type: 'normal', baseHp: 39, acts: [2],
     intentPattern: 'cycle',
   },
   theMonolith: {
-    id: 'theMonolith', name: 'The Monolith', type: 'elite', baseHp: 70, acts: [2],
+    id: 'theMonolith', name: 'The Monolith', type: 'elite', baseHp: 95, acts: [2],
     intentPattern: 'ai',
   },
   theSilo: {
-    id: 'theSilo', name: 'The Silo', type: 'boss', baseHp: 100, acts: [2],
+    id: 'theSilo', name: 'The Silo', type: 'boss', baseHp: 220, acts: [2],
     intentPattern: 'ai',
   },
   dataFragment: {
-    id: 'dataFragment', name: 'Data Fragment', type: 'normal', baseHp: 15, acts: [2],
+    id: 'dataFragment', name: 'Data Fragment', type: 'normal', baseHp: 20, acts: [2],
     intentPattern: 'cycle',
   },
 
@@ -60,11 +60,11 @@ export const ENEMIES: Record<string, EnemyDef> = {
     intentPattern: 'ai',
   },
   theGatekeeper: {
-    id: 'theGatekeeper', name: 'The Gatekeeper', type: 'elite', baseHp: 80, acts: [3],
+    id: 'theGatekeeper', name: 'The Gatekeeper', type: 'elite', baseHp: 110, acts: [3],
     intentPattern: 'ai',
   },
   theOverfitter: {
-    id: 'theOverfitter', name: 'The Overfitter', type: 'boss', baseHp: 120, acts: [3],
+    id: 'theOverfitter', name: 'The Overfitter', type: 'boss', baseHp: 300, acts: [3],
     intentPattern: 'ai',
   },
 };

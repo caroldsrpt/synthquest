@@ -18,7 +18,7 @@ export interface CardDef {
   act: 1 | 2 | 3; // earliest act this card appears
 }
 
-export type CardKeyword = 'exhaust' | 'retain' | 'autoplay';
+export type CardKeyword = 'exhaust' | 'retain' | 'autoplay' | 'power';
 
 export interface CardInstance {
   id: string; // unique instance ID
@@ -49,7 +49,12 @@ export type CardEffect =
   | { type: 'copyEnemyIntent' }
   | { type: 'permanentUpgradePrompt' }
   | { type: 'heal'; amount: number }
-  | { type: 'damagePerExhaust'; multiplier: number };
+  | { type: 'damagePerExhaust'; multiplier: number }
+  | { type: 'power_blockPerTurn'; amount: number }
+  | { type: 'power_drawPerTurn'; amount: number }
+  | { type: 'power_reduceDamage'; amount: number }
+  | { type: 'power_firstCardFree' }
+  | { type: 'power_attackSplash'; amount: number };
 
 // === Status Effects ===
 

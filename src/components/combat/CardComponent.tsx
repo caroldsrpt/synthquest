@@ -118,12 +118,12 @@ export function CardComponent({ card, index, selected, playable, onClick, small 
         fontSize: 8,
         fontFamily: "'Press Start 2P', monospace",
         textAlign: 'center',
-        color: def.category === 'curse' ? '#ef4444' : def.target === 'self' ? '#60a5fa' : def.target === 'allEnemies' ? '#f472b6' : def.target === 'none' ? '#fbbf24' : '#ef4444',
+        color: def.category === 'curse' ? '#ef4444' : def.keywords?.includes('power') ? '#4ade80' : def.target === 'self' ? '#60a5fa' : def.target === 'allEnemies' ? '#f472b6' : def.target === 'none' ? '#fbbf24' : '#ef4444',
         letterSpacing: 1,
         textTransform: 'uppercase',
         textShadow: PX_OUTLINE_SM,
       }}>
-        {def.category === 'curse' ? 'CURSE' : def.target === 'self' ? 'BLOCK' : def.target === 'allEnemies' ? 'AOE' : def.target === 'none' ? 'UTILITY' : 'ATTACK'}
+        {def.category === 'curse' ? 'CURSE' : def.keywords?.includes('power') ? 'POWER' : def.target === 'self' ? 'BLOCK' : def.target === 'allEnemies' ? 'AOE' : def.target === 'none' ? 'UTILITY' : 'ATTACK'}
       </div>
 
       {/* Name */}

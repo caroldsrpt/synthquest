@@ -4,7 +4,16 @@ import { CARDS } from '../game/data/cards';
 import { BASE_ENERGY, HAND_SIZE } from '../utils/constants';
 import { shuffle } from '../utils/random';
 
+export interface ActivePower {
+  type: string;
+  amount?: number;
+}
+
 interface CombatStore extends CombatState {
+  // Powers
+  activePowers: ActivePower[];
+  addPower: (power: ActivePower) => void;
+
   // Setup
   initCombat: (deck: CardInstance[], enemies: EnemyInstance[], maxEnergy?: number, extraDraw?: number) => void;
 
@@ -81,10 +90,14 @@ const INITIAL_STATE: CombatState = {
 
 export const useCombatStore = create<CombatStore>((set, get) => ({
   ...INITIAL_STATE,
+  activePowers: [] as ActivePower[],
+
+  addPower: (power) => set((s) => ({ activePowers: [...s.activePowers, power] })),
 
   initCombat: (deck, enemies, maxEnergy = BASE_ENERGY) => {
     set({
       ...INITIAL_STATE,
+      activePowers: [],
       active: true,
       maxEnergy,
       drawPile: shuffle([...deck]),
@@ -103,15 +116,23 @@ export const useCombatStore = create<CombatStore>((set, get) => ({
       energy = Math.max(0, energy - throttled.stacks);
     }
 
+    // blockPerTurn power: gain firewall at start of turn
+    let startFirewall = 0;
+    for (const power of state.activePowers) {
+      if (power.type === 'blockPerTurn' && power.amount) {
+        startFirewall += power.amount;
+      }
+    }
+
     set({
       turn: state.turn + 1,
       energy,
-      playerFirewall: 0,
+      playerFirewall: startFirewall,
       phase: 'playerTurn',
       selectedCardIndex: null,
       targetingCardIndex: null,
       totalDamageDealtThisTurn: 0,
-      totalFirewallGainedThisTurn: 0,
+      totalFirewallGainedThisTurn: startFirewall,
       cardsPlayedThisTurn: [],
       categoryCountThisTurn: { text: 0, structure: 0, logic: 0, vision: 0, noise: 0, curse: 0 },
       lastCardPlayedId: null,
@@ -119,9 +140,14 @@ export const useCombatStore = create<CombatStore>((set, get) => ({
       playerStatus: state.playerStatus.filter((s) => s.status !== 'throttled'),
     });
 
-    // Draw cards
-    const drawCount = HAND_SIZE;
-    get().drawCards(drawCount);
+    // Draw cards (base + drawPerTurn power bonus)
+    let extraDraw = 0;
+    for (const power of state.activePowers) {
+      if (power.type === 'drawPerTurn' && power.amount) {
+        extraDraw += power.amount;
+      }
+    }
+    get().drawCards(HAND_SIZE + extraDraw);
   },
 
   endPlayerTurn: () => {
@@ -326,5 +352,5 @@ export const useCombatStore = create<CombatStore>((set, get) => ({
 
   setRewards: (gold, cards, relic) => set({ goldReward: gold, cardRewards: cards, relicReward: relic }),
 
-  endCombat: () => set({ ...INITIAL_STATE }),
+  endCombat: () => set({ ...INITIAL_STATE, activePowers: [] }),
 }));

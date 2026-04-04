@@ -13,11 +13,13 @@ interface PlayerStatusProps {
   drawPileCount: number;
   discardPileCount: number;
   exhaustPileCount: number;
+  activePowers?: { type: string; amount?: number }[];
 }
 
 export function PlayerStatus({
   integrity, maxIntegrity, firewall, energy, maxEnergy,
   statusEffects, drawPileCount, discardPileCount, exhaustPileCount,
+  activePowers = [],
 }: PlayerStatusProps) {
   const hpPct = Math.max(0, (integrity / maxIntegrity) * 100);
   const hpColor = hpPct > 50 ? COLORS.hp : hpPct > 25 ? COLORS.hpMid : COLORS.hpLow;
@@ -113,6 +115,29 @@ export function PlayerStatus({
         ))}
       </div>
 
+      {/* Active powers */}
+      {activePowers.length > 0 && (
+        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+          {activePowers.map((p, i) => (
+            <span
+              key={`${p.type}-${i}`}
+              title={getPowerDescription(p.type, p.amount)}
+              style={{
+                fontSize: 10,
+                padding: '4px 8px',
+                background: '#05966922',
+                border: '1px solid #10b98144',
+                color: '#4ade80',
+                fontWeight: 'bold',
+                textShadow: PX_OUTLINE,
+              }}
+            >
+              {getPowerLabel(p.type, p.amount)}
+            </span>
+          ))}
+        </div>
+      )}
+
       {/* Pile counts */}
       <div style={{ display: 'flex', gap: 14, fontSize: 10, color: '#6b5c7a', textShadow: PX_OUTLINE }}>
         <span>Draw: {drawPileCount}</span>
@@ -176,5 +201,27 @@ function getStatusLabel(status: string): string {
     case 'confused': return 'Confused';
     case 'overfit': return 'Overfit';
     default: return status;
+  }
+}
+
+function getPowerLabel(type: string, amount?: number): string {
+  switch (type) {
+    case 'blockPerTurn': return `+${amount} FW/turn`;
+    case 'drawPerTurn': return `+${amount} Draw/turn`;
+    case 'reduceDamage': return `-${amount} Dmg taken`;
+    case 'firstCardFree': return '1st card free';
+    case 'attackSplash': return `Splash ${amount}`;
+    default: return type;
+  }
+}
+
+function getPowerDescription(type: string, amount?: number): string {
+  switch (type) {
+    case 'blockPerTurn': return `Gain ${amount} Firewall at the start of each turn.`;
+    case 'drawPerTurn': return `Draw ${amount} additional card${amount !== 1 ? 's' : ''} at the start of each turn.`;
+    case 'reduceDamage': return `Enemies deal ${amount} less damage per hit.`;
+    case 'firstCardFree': return 'The first card you play each turn costs 0 energy.';
+    case 'attackSplash': return `When you play an Attack, deal ${amount} damage to ALL enemies.`;
+    default: return '';
   }
 }
