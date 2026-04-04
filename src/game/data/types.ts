@@ -139,7 +139,9 @@ export type EventEffect =
   | { type: 'startNextCombatWithFirewall'; amount: number; combats: number }
   | { type: 'loseIntegrity'; amount: number }
   | { type: 'tempMaxEnergy'; amount: number; combats: number }
-  | { type: 'exhaustRandomCards'; count: number };
+  | { type: 'exhaustRandomCards'; count: number }
+  | { type: 'upgradeRandomCard' }
+  | { type: 'removeRandomNonStarterCard' };
 
 export interface EventDef {
   id: string;
@@ -202,6 +204,7 @@ export interface RunState {
     cardsInDeck: number;
   };
   // Temporary per-combat event buffs
+  currentEventId?: string | null;
   nextCombatStatus?: { status: StatusType; stacks: number }[];
   nextCombatFirewall?: { amount: number; combatsLeft: number };
   tempMaxEnergy?: { amount: number; combatsLeft: number };

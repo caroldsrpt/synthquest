@@ -7,6 +7,7 @@ import { weightedPick, randInt } from '../../utils/random';
 import { COMBAT_GOLD_MIN, COMBAT_GOLD_MAX, ELITE_GOLD_MIN, ELITE_GOLD_MAX, BOSS_GOLD_MIN, BOSS_GOLD_MAX } from '../../utils/constants';
 import { generateCardRewards } from '../../utils/cardUtils';
 import { SCENARIOS } from '../../game/data/scenarios';
+import { getEventsForAct } from '../../game/data/events';
 import type { MapNode } from '../../game/data/types';
 
 const PIXEL = "'Press Start 2P', monospace";
@@ -94,8 +95,13 @@ export function MapScreen() {
     } else if (node.type === 'scenario' && node.scenarioId) {
       run.setCurrentScenario(node.scenarioId);
       run.setScreen('scenario');
+    } else if (node.type === 'event') {
+      const pool = getEventsForAct(run.act);
+      const picked = pool[Math.floor(Math.random() * pool.length)];
+      run.setCurrentEvent(picked.id);
+      run.setScreen('event');
     } else {
-      run.setScreen(node.type as 'rest' | 'shop' | 'event');
+      run.setScreen(node.type as 'rest' | 'shop');
     }
   };
 

@@ -554,6 +554,124 @@ export function CombatScreen() {
         combat.addPower({ type: 'attackSplash', amount: effect.amount });
         combat.addLog(`Gained Power: Attacks splash ${effect.amount} damage to all enemies`);
         break;
+
+      case 'replayLastCard': {
+        const played = state.cardsPlayedThisTurn;
+        const lastDefId = played.length >= 1 ? played[played.length - 1] : null;
+        if (!lastDefId || lastDefId === card.defId) { combat.addLog('No valid card to replay.'); break; }
+        const lastDef = CARDS[lastDefId];
+        if (!lastDef) break;
+        const replayInst = createCardInstance(lastDefId);
+        replayInst.costOverride = 0;
+        combat.addLog(`Replaying ${lastDef.name}!`);
+        for (const re of getCardEffects(replayInst)) {
+          resolveEffect(re, replayInst, targetEnemyId);
+        }
+        useCombatStore.setState((s) => ({ exhaustPile: [...s.exhaustPile, replayInst] }));
+        break;
+      }
+
+      case 'playFromDraw': {
+        const maxPlays = effect.maxPlays || 1;
+        for (let i = 0; i < maxPlays; i++) {
+          const drawState = useCombatStore.getState();
+          if (drawState.drawPile.length === 0) break;
+          const topCard = drawState.drawPile[0];
+          const topDef = CARDS[topCard.defId];
+          if (!topDef) break;
+          useCombatStore.setState((s) => ({ drawPile: s.drawPile.slice(1) }));
+          topCard.costOverride = 0;
+          const dmgBefore = useCombatStore.getState().totalDamageDealtThisTurn;
+          combat.addLog(`Played ${topDef.name} from draw pile!`);
+          combat.trackCardPlayed(topCard.defId, topDef.category);
+          const autoTarget = targetEnemyId || useCombatStore.getState().enemies.find((e) => e.hp > 0)?.id;
+          for (const te of getCardEffects(topCard)) { resolveEffect(te, topCard, autoTarget); }
+          if (topDef.keywords?.includes('exhaust')) {
+            useCombatStore.setState((s) => ({ exhaustPile: [...s.exhaustPile, topCard] }));
+          } else { combat.addToDiscard(topCard); }
+          if (effect.onlyIfDamage) {
+            const dmgAfter = useCombatStore.getState().totalDamageDealtThisTurn;
+            if (dmgAfter <= dmgBefore) break;
+          }
+        }
+        break;
+      }
+
+      case 'playFromHand': {
+        const playableHand = useCombatStore.getState().hand.filter((c) => c.defId !== card.defId && c.defId !== 'hallucination');
+        const toPlay = [...playableHand].sort(() => Math.random() - 0.5).slice(0, effect.count);
+        for (const handCard of toPlay) {
+          if (!useCombatStore.getState().hand.find((c) => c.id === handCard.id)) continue;
+          const hDef = CARDS[handCard.defId];
+          if (!hDef) continue;
+          useCombatStore.setState((s) => ({ hand: s.hand.filter((c) => c.id !== handCard.id) }));
+          handCard.costOverride = 0;
+          combat.addLog(`Orchestrator plays ${hDef.name}!`);
+          combat.trackCardPlayed(handCard.defId, hDef.category);
+          const autoTarget = targetEnemyId || useCombatStore.getState().enemies.find((e) => e.hp > 0)?.id;
+          for (const he of getCardEffects(handCard)) { resolveEffect(he, handCard, autoTarget); }
+          if (hDef.keywords?.includes('exhaust')) {
+            useCombatStore.setState((s) => ({ exhaustPile: [...s.exhaustPile, handCard] }));
+          } else { combat.addToDiscard(handCard); }
+        }
+        break;
+      }
+
+      case 'scry':
+        combat.drawCards(1);
+        combat.addLog(`Scried top ${effect.amount} cards — drew 1.`);
+        break;
+
+      case 'copyEnemyIntent': {
+        const enemy = targetEnemyId ? state.enemies.find((e) => e.id === targetEnemyId) : state.enemies.find((e) => e.hp > 0);
+        if (!enemy) break;
+        const mirrorInst = createCardInstance('intentMirror');
+        mirrorInst.costOverride = 0;
+        combat.addToHand(mirrorInst);
+        combat.addLog(`Copied enemy intent as Intent Mirror!`);
+        break;
+      }
+
+      case 'permanentUpgradePrompt': {
+        const runState = useRunStore.getState();
+        const nonUpgraded = runState.deck.filter((c) => c.defId === 'prompt' && !c.upgraded);
+        if (nonUpgraded.length > 0) {
+          const pick = nonUpgraded[Math.floor(Math.random() * nonUpgraded.length)];
+          runState.upgradeCardInDeck(pick.id);
+          combat.addLog('Permanently upgraded a Prompt!');
+        } else { combat.addLog('No Prompts to upgrade.'); }
+        break;
+      }
+
+      case 'exhaustFromHand': {
+        const curHand = useCombatStore.getState().hand;
+        const exhaustable = curHand
+          .filter((c) => { const d = CARDS[c.defId]; return d && d.rarity !== 'curse' && c.id !== card.id; })
+          .sort((a, b) => getCardCost(a) - getCardCost(b));
+        if (exhaustable.length > 0) {
+          const toExhaust = exhaustable[0];
+          useCombatStore.setState((s) => ({
+            hand: s.hand.filter((c) => c.id !== toExhaust.id),
+            exhaustPile: [...s.exhaustPile, toExhaust],
+          }));
+          combat.addLog(`Exhausted ${CARDS[toExhaust.defId]?.name || 'a card'}.`);
+        }
+        break;
+      }
+
+      case 'heal':
+        run.heal(effect.amount);
+        combat.addLog(`Healed ${effect.amount} HP.`);
+        break;
+
+      case 'addTempCards':
+        for (let i = 0; i < effect.count; i++) {
+          const tempInst = createCardInstance(effect.cardId);
+          if (effect.costOverride !== undefined) tempInst.costOverride = effect.costOverride;
+          combat.addToHand(tempInst);
+        }
+        combat.addLog(`Added ${effect.count} ${CARDS[effect.cardId]?.name || 'cards'} to hand.`);
+        break;
     }
 
     if (consumeContext && contextBonus > 0) {

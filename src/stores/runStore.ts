@@ -51,6 +51,10 @@ interface RunStore extends RunState {
   currentScenarioId: string | null;
   setCurrentScenario: (id: string | null) => void;
 
+  // Events
+  currentEventId: string | null;
+  setCurrentEvent: (id: string | null) => void;
+
   // Getters
   getMaxEnergy: () => number;
   getDrawCount: () => number;
@@ -200,6 +204,10 @@ export const useRunStore = create<RunStore>((set, get) => ({
   },
 
   hasTeachingShown: (triggerId) => get().teachingTriggersShown.includes(triggerId),
+
+  // Events
+  currentEventId: null,
+  setCurrentEvent: (id) => set({ currentEventId: id }),
 
   // Scenarios
   currentScenarioId: null,

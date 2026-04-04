@@ -6,6 +6,8 @@ import { RestScreen } from './components/screens/RestScreen';
 import { ScenarioScreen } from './components/screens/ScenarioScreen';
 import { GameOverScreen, VictoryScreen } from './components/screens/GameOverScreen';
 import { ShopScreen } from './components/screens/ShopScreen';
+import { EventScreen } from './components/screens/EventScreen';
+import { KnowledgeBaseScreen } from './components/screens/KnowledgeBaseScreen';
 
 function App() {
   const screen = useRunStore((s) => s.screen);
@@ -19,32 +21,9 @@ function App() {
       {screen === 'scenario' && <ScenarioScreen />}
       {screen === 'gameOver' && <GameOverScreen />}
       {screen === 'victory' && <VictoryScreen />}
-      {screen === 'event' && <PlaceholderScreen label="Event" />}
+      {screen === 'event' && <EventScreen />}
       {screen === 'shop' && <ShopScreen />}
-      {screen === 'knowledgeBase' && <PlaceholderScreen label="Knowledge Base" />}
-    </div>
-  );
-}
-
-function PlaceholderScreen({ label }: { label: string }) {
-  const setScreen = useRunStore((s) => s.setScreen);
-  return (
-    <div style={{
-      width: '100%', height: '100%',
-      background: '#0c0c1a', fontFamily: 'monospace', color: '#e0e0e0',
-      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-    }}>
-      <div style={{ fontSize: 20, marginBottom: 16 }}>{label} (Coming Soon)</div>
-      <button
-        onClick={() => setScreen('map')}
-        style={{
-          padding: '10px 24px', background: 'rgba(123, 104, 238, 0.2)',
-          border: '2px solid #7b68ee', borderRadius: 8, color: '#e0e0e0',
-          fontFamily: 'monospace', cursor: 'pointer',
-        }}
-      >
-        Back to Map
-      </button>
+      {screen === 'knowledgeBase' && <KnowledgeBaseScreen />}
     </div>
   );
 }

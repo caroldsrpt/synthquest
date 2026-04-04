@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useRunStore } from '../../stores/runStore';
+import { useMetaStore } from '../../stores/metaStore';
 import { SCENARIOS } from '../../game/data/scenarios';
 import { CARDS } from '../../game/data/cards';
 import { createCardInstance } from '../../utils/cardUtils';
@@ -27,6 +28,8 @@ export function ScenarioScreen() {
   };
 
   const handleDismissPopup = () => {
+    // Unlock knowledge concept in persistent meta store
+    useMetaStore.getState().unlockKnowledge(scenario.concept);
     // Award card
     const card = createCardInstance(scenario.cardRewardId);
     run.addCardToDeck(card);
