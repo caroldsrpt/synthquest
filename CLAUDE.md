@@ -34,7 +34,17 @@ src/
 - **One continuous story** — Byte's Bakery. Each scenario adds a capability to the same AI assistant.
 - **18 concepts across 3 acts** — each concept creates the need for the next.
 - **Semi-fixed maps** — scenario positions are predetermined, combat/shop/rest are random.
-- **4 reusable interaction types** — drag-to-connect, slider, click-to-compare, click-toggle.
+- **Skill checks** — timing-based mini-games on certain cards (5 types). Multiplier affects damage/block.
+- **Relic system** — 15 relics, wired into effectResolver/combatStore/CombatScreen. Awarded after elite/boss.
+- **Potion system** — 10 AI-themed bakery potions, 2 slots, drops after combat, available in shop.
+
+## Key Files
+
+- `src/game/systems/effectResolver.ts` — All card effect resolution + relic modifiers
+- `src/game/systems/enemyAI.ts` — Enemy intent execution, hallucination processing, debuff ticking
+- `src/game/data/skillChecks.ts` — Card-to-skill-check mapping
+- `src/game/data/potions.ts` — 10 potion definitions
+- `docs/research-*.md` — Design research (relics, potions, scenarios, onboarding, skill checks)
 
 ## Path Alias
 
@@ -45,6 +55,7 @@ Use `@/` for imports: `import { CARDS } from '@/game/data/cards'`
 - `master` — Pokemon-style version (archived, tagged `v1-pokemon-style`)
 - `roguelike` — current development branch
 
-## Plan File
+## Plan Files
 
-Full game design: `.claude/plans/frolicking-crafting-eich.md`
+- Build plan: `.claude/plans/iridescent-enchanting-book.md`
+- Original game design: `.claude/plans/frolicking-crafting-eich.md`
