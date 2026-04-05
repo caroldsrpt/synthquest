@@ -56,6 +56,27 @@ export function ByteSpeechBubble() {
         animation: 'tipFadeIn 0.3s ease-out',
       }}
     >
+      {/* Tail pointing down-left toward Byte */}
+      <div style={{
+        position: 'absolute',
+        bottom: -10,
+        left: 12,
+        width: 0,
+        height: 0,
+        borderLeft: '8px solid transparent',
+        borderRight: '8px solid transparent',
+        borderTop: '10px solid #a882ff',
+      }} />
+      <div style={{
+        position: 'absolute',
+        bottom: -7,
+        left: 14,
+        width: 0,
+        height: 0,
+        borderLeft: '6px solid transparent',
+        borderRight: '6px solid transparent',
+        borderTop: '8px solid rgba(12, 8, 24, 0.92)',
+      }} />
       <div style={{
         fontFamily: PIXEL,
         fontSize: 10,

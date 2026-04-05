@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const SYMBOLS = ['◆', '▲', '●', '■', '★'];
 
@@ -9,6 +9,7 @@ export function PatternMatchCheck({ onResult }: { onResult: (multiplier: number)
   const [phase, setPhase] = useState<'show' | 'pick' | 'done'>('show');
   const [picked, setPicked] = useState<number | null>(null);
   const [startTime, setStartTime] = useState(0);
+  const resolved = useRef(false);
 
   useEffect(() => {
     // Pick target and 3 distractors
@@ -25,13 +26,17 @@ export function PatternMatchCheck({ onResult }: { onResult: (multiplier: number)
     }, 1000);
     // Auto-fail after 3s total
     const timeout = setTimeout(() => {
-      if (phase !== 'done') onResult(0.3);
+      if (!resolved.current) {
+        resolved.current = true;
+        onResult(0.3);
+      }
     }, 3000);
     return () => { clearTimeout(timer); clearTimeout(timeout); };
   }, []);
 
   const handlePick = (index: number) => {
-    if (phase !== 'pick') return;
+    if (phase !== 'pick' || resolved.current) return;
+    resolved.current = true;
     setPicked(index);
     setPhase('done');
     const correct = options[index] === target;

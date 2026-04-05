@@ -49,7 +49,7 @@ export function RelicBar({ relicIds }: { relicIds: string[] }) {
                 position: 'absolute',
                 top: '100%',
                 left: '50%',
-                transform: 'translateX(-50%)',
+                transform: 'translateX(-25%)',
                 marginTop: 8,
                 padding: '10px 14px',
                 background: 'rgba(12, 8, 24, 0.95)',
