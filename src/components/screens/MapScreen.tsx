@@ -204,12 +204,25 @@ export function MapScreen() {
           }}>
             ♥ {run.currentIntegrity}/{run.maxIntegrity}
           </span>
-          <span
+          <button
             onClick={() => setShowDeck(true)}
-            style={{ color: '#8a7a66', textShadow: PX_OUTLINE, cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#3d2d5c' }}
+            title="View your deck"
+            style={{
+              padding: '3px 10px',
+              background: 'rgba(12, 8, 24, 0.8)',
+              border: '2px solid #6b4fa0',
+              color: '#c4b89a',
+              fontFamily: PIXEL,
+              fontSize: 8,
+              cursor: 'pointer',
+              letterSpacing: 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
           >
-            {run.deck.length} cards
-          </span>
+            <span style={{ fontSize: 11 }}>🃏</span> {run.deck.length} cards
+          </button>
         </div>
       </div>
 

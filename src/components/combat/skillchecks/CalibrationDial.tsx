@@ -32,7 +32,7 @@ export function CalibrationDial({ onResult }: { onResult: (multiplier: number) =
     const inGreen = angle >= greenStart && angle <= greenEnd;
     const nearGreen = angle >= greenStart - 15 && angle <= greenEnd + 15;
     const mult = inGreen ? 1.5 : nearGreen ? 1.1 : 0.5;
-    setTimeout(() => onResult(mult), 400);
+    setTimeout(() => onResult(mult), 80);
   };
 
   const needleRad = (angle - 90) * (Math.PI / 180);

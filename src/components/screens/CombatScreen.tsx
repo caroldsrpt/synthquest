@@ -550,12 +550,25 @@ export function CombatScreen() {
           <RelicBar relicIds={run.relics} />
         </div>
         <span style={{ color: '#8a7a66', fontSize: 11 }}>{combat.log[combat.log.length - 1] || ''}</span>
-        <span
+        <button
           onClick={() => setShowDeck(true)}
-          style={{ color: '#8a7a66', fontSize: 9, cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#3d2d5c', letterSpacing: 1 }}
+          title="View your deck"
+          style={{
+            padding: '4px 12px',
+            background: 'rgba(12, 8, 24, 0.8)',
+            border: '2px solid #6b4fa0',
+            color: '#c4b89a',
+            fontFamily: "'Press Start 2P', monospace",
+            fontSize: 8,
+            cursor: 'pointer',
+            letterSpacing: 1,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
         >
-          DECK
-        </span>
+          <span style={{ fontSize: 12 }}>🃏</span> DECK ({run.deck.length})
+        </button>
       </div>
 
       {/* Battle area: player left, enemies right */}

@@ -36,7 +36,7 @@ export function TemperatureSlider({ onResult }: { onResult: (multiplier: number)
     else mult = 0.6;
     // Too high = risky
     if (value > 90) mult = 0.5;
-    setTimeout(() => onResult(mult), 400);
+    setTimeout(() => onResult(mult), 80);
   };
 
   return (

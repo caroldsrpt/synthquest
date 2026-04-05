@@ -41,7 +41,7 @@ export function PatternMatchCheck({ onResult }: { onResult: (multiplier: number)
     else if (correct && elapsed < 1000) mult = 1.2;
     else if (correct) mult = 1.0;
     else mult = 0.4;
-    setTimeout(() => onResult(mult), 400);
+    setTimeout(() => onResult(mult), 80);
   };
 
   return (

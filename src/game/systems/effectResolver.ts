@@ -90,11 +90,15 @@ export function resolveEffect(
       }
       break;
     }
-    case 'firewall':
-      useCombatStore.getState().gainFirewall(effect.amount + contextBonus);
-      anim.showPlayerDefend(effect.amount + contextBonus);
+    case 'firewall': {
+      let fw = effect.amount;
+      // Relic: redisShard — Cache Hit always gives max value (8)
+      if (hasRelic('redisShard') && card.defId === 'cacheHit') fw = 8;
+      useCombatStore.getState().gainFirewall(fw + contextBonus);
+      anim.showPlayerDefend(fw + contextBonus);
       consumeContext = true;
       break;
+    }
     case 'firewallFromMissingHp': {
       const missing = run.maxIntegrity - run.currentIntegrity;
       useCombatStore.getState().gainFirewall(missing + contextBonus);
@@ -318,5 +322,17 @@ export function resolveCardEffects(
 
   if (shouldConsumeContext) {
     useCombatStore.getState().removePlayerStatus('context', 999);
+  }
+
+  // Relic: mcpServer — Tool Use and Agent Loop trigger twice (2nd costs 1 energy)
+  if (hasRelic('mcpServer') && (card.defId === 'toolUse' || card.defId === 'agentLoop')) {
+    const combat = useCombatStore.getState();
+    if (combat.energy >= 1) {
+      useCombatStore.getState().spendEnergy(1);
+      useCombatStore.getState().addLog('MCP Server triggers again! (-1 energy)');
+      for (const effect of effects) {
+        resolveEffect(effect, card, anim, targetEnemyId);
+      }
+    }
   }
 }

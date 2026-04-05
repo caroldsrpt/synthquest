@@ -23,7 +23,7 @@ export function BatchTimingCheck({ onResult }: { onResult: (multiplier: number) 
       setDone(true);
       const h = hitsRef.current;
       const mult = h === 3 ? 1.5 : h === 2 ? 1.2 : h === 1 ? 0.8 : 0.4;
-      setTimeout(() => onResult(mult), 400);
+      setTimeout(() => onResult(mult), 80);
     }, 2800));
     return () => timers.forEach(clearTimeout);
   }, []);

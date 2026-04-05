@@ -30,7 +30,7 @@ export function ByteSpeechBubble() {
       if (speech.condition(context)) {
         setText(speech.text);
         run.markTeachingShown(speech.id);
-        const timer = setTimeout(() => setText(null), 4000);
+        const timer = setTimeout(() => setText(null), 8000);
         return () => clearTimeout(timer);
       }
     }
@@ -43,34 +43,48 @@ export function ByteSpeechBubble() {
       onClick={() => setText(null)}
       style={{
         position: 'absolute',
-        left: '8%',
-        bottom: '42%',
+        left: '5%',
+        bottom: '55%',
         zIndex: 25,
-        padding: '10px 16px',
-        background: 'rgba(12, 8, 24, 0.92)',
-        border: '2px solid #a882ff',
-        borderRadius: '12px 12px 12px 0',
-        maxWidth: 240,
+        padding: '14px 20px',
+        background: 'rgba(12, 8, 24, 0.95)',
+        border: '3px solid #a882ff',
+        boxShadow: '0 0 20px rgba(168,130,255,0.3), inset 0 0 0 2px #1a1130',
+        borderRadius: '16px 16px 16px 4px',
+        maxWidth: 300,
         cursor: 'pointer',
         animation: 'tipFadeIn 0.3s ease-out',
       }}
     >
       <div style={{
         fontFamily: PIXEL,
-        fontSize: 7,
-        color: '#c4b89a',
-        lineHeight: 1.6,
+        fontSize: 10,
+        color: '#e0d8c8',
+        lineHeight: 1.8,
+        textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000',
       }}>
         {text}
       </div>
       <div style={{
         fontFamily: PIXEL,
-        fontSize: 5,
-        color: '#6b7280',
-        marginTop: 4,
+        fontSize: 7,
+        color: '#8a7a9e',
+        marginTop: 8,
+        letterSpacing: 1,
       }}>
-        click to dismiss
+        [click to dismiss]
       </div>
+      {/* Speech bubble tail pointing down-left to Byte */}
+      <div style={{
+        position: 'absolute',
+        bottom: -10,
+        left: 16,
+        width: 0,
+        height: 0,
+        borderLeft: '10px solid transparent',
+        borderRight: '10px solid transparent',
+        borderTop: '10px solid #a882ff',
+      }} />
     </div>
   );
 }

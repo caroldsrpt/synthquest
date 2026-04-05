@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { COLORS } from '../../utils/constants';
 
 const PIXEL = "'Press Start 2P', monospace";
@@ -16,6 +17,36 @@ interface PlayerStatusProps {
   activePowers?: { type: string; amount?: number }[];
 }
 
+/** Styled hover tooltip that appears above the hovered element */
+function Tooltip({ text, visible }: { text: string; visible: boolean }) {
+  if (!visible) return null;
+  return (
+    <div style={{
+      position: 'absolute',
+      bottom: '100%',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      marginBottom: 10,
+      padding: '10px 14px',
+      background: 'rgba(12, 8, 24, 0.97)',
+      border: '2px solid #6b4fa0',
+      boxShadow: '0 0 16px rgba(0,0,0,0.7)',
+      fontFamily: PIXEL,
+      fontSize: 8,
+      color: '#c4b89a',
+      lineHeight: 1.7,
+      minWidth: 160,
+      maxWidth: 260,
+      textAlign: 'center',
+      zIndex: 100,
+      pointerEvents: 'none',
+      whiteSpace: 'normal',
+    }}>
+      {text}
+    </div>
+  );
+}
+
 export function PlayerStatus({
   integrity, maxIntegrity, firewall, energy, maxEnergy,
   statusEffects, drawPileCount, discardPileCount, exhaustPileCount,
@@ -23,6 +54,7 @@ export function PlayerStatus({
 }: PlayerStatusProps) {
   const hpPct = Math.max(0, (integrity / maxIntegrity) * 100);
   const hpColor = hpPct > 50 ? COLORS.hp : hpPct > 25 ? COLORS.hpMid : COLORS.hpLow;
+  const [hovered, setHovered] = useState<string | null>(null);
 
   return (
     <div style={{
@@ -38,25 +70,36 @@ export function PlayerStatus({
       zIndex: 3,
     }}>
       {/* Energy orb */}
-      <div style={{
-        width: 56,
-        height: 56,
-        background: COLORS.energy,
-        border: '3px solid #000',
-        boxShadow: `inset 0 0 0 2px ${COLORS.energy}, 0 0 8px ${COLORS.energy}44`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: 14,
-        fontWeight: 'bold',
-        color: '#0f0f23',
-        flexShrink: 0,
-      }}>
+      <div
+        onMouseEnter={() => setHovered('energy')}
+        onMouseLeave={() => setHovered(null)}
+        style={{
+          width: 56,
+          height: 56,
+          background: COLORS.energy,
+          border: '3px solid #000',
+          boxShadow: `inset 0 0 0 2px ${COLORS.energy}, 0 0 8px ${COLORS.energy}44`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 14,
+          fontWeight: 'bold',
+          color: '#0f0f23',
+          flexShrink: 0,
+          position: 'relative',
+          cursor: 'default',
+        }}
+      >
         {energy}/{maxEnergy}
+        <Tooltip text="ENERGY — Spend energy to play cards. Resets each turn." visible={hovered === 'energy'} />
       </div>
 
       {/* HP / Firewall */}
-      <div style={{ flex: 1, maxWidth: 220 }}>
+      <div
+        onMouseEnter={() => setHovered('hp')}
+        onMouseLeave={() => setHovered(null)}
+        style={{ flex: 1, maxWidth: 220, position: 'relative', cursor: 'default' }}
+      >
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 4 }}>
           <span style={{ color: '#e0e0e0', textShadow: PX_OUTLINE }}>
             HP: {integrity}/{maxIntegrity}
@@ -92,6 +135,12 @@ export function PlayerStatus({
             position: 'relative',
           }} />
         </div>
+        <Tooltip
+          text={firewall > 0
+            ? `INTEGRITY (HP) — Your health. Reach 0 and it's game over.\n\nFIREWALL — Absorbs incoming damage before HP. Resets each turn.`
+            : `INTEGRITY (HP) — Your health. Reach 0 and it's game over. Play defense cards to gain Firewall (blocks damage).`}
+          visible={hovered === 'hp'}
+        />
       </div>
 
       {/* Status effects */}
@@ -99,7 +148,8 @@ export function PlayerStatus({
         {statusEffects.map((s) => (
           <span
             key={s.status}
-            title={getStatusDescription(s.status)}
+            onMouseEnter={() => setHovered(`status-${s.status}`)}
+            onMouseLeave={() => setHovered(null)}
             style={{
               fontSize: 10,
               padding: '4px 8px',
@@ -108,9 +158,12 @@ export function PlayerStatus({
               color: getStatusFg(s.status),
               fontWeight: 'bold',
               textShadow: PX_OUTLINE,
+              cursor: 'default',
+              position: 'relative',
             }}
           >
             {getStatusLabel(s.status)} {s.stacks}
+            <Tooltip text={getStatusDescription(s.status)} visible={hovered === `status-${s.status}`} />
           </span>
         ))}
       </div>
@@ -121,7 +174,8 @@ export function PlayerStatus({
           {activePowers.map((p, i) => (
             <span
               key={`${p.type}-${i}`}
-              title={getPowerDescription(p.type, p.amount)}
+              onMouseEnter={() => setHovered(`power-${p.type}-${i}`)}
+              onMouseLeave={() => setHovered(null)}
               style={{
                 fontSize: 10,
                 padding: '4px 8px',
@@ -130,9 +184,12 @@ export function PlayerStatus({
                 color: '#4ade80',
                 fontWeight: 'bold',
                 textShadow: PX_OUTLINE,
+                cursor: 'default',
+                position: 'relative',
               }}
             >
               {getPowerLabel(p.type, p.amount)}
+              <Tooltip text={getPowerDescription(p.type, p.amount)} visible={hovered === `power-${p.type}-${i}`} />
             </span>
           ))}
         </div>
@@ -140,9 +197,32 @@ export function PlayerStatus({
 
       {/* Pile counts */}
       <div style={{ display: 'flex', gap: 14, fontSize: 10, color: '#6b5c7a', textShadow: PX_OUTLINE }}>
-        <span>Draw: {drawPileCount}</span>
-        <span>Disc: {discardPileCount}</span>
-        {exhaustPileCount > 0 && <span>Exh: {exhaustPileCount}</span>}
+        <span
+          onMouseEnter={() => setHovered('draw')}
+          onMouseLeave={() => setHovered(null)}
+          style={{ cursor: 'default', position: 'relative' }}
+        >
+          Draw: {drawPileCount}
+          <Tooltip text="DRAW PILE — Cards you'll draw from. When empty, your discard pile is reshuffled into it." visible={hovered === 'draw'} />
+        </span>
+        <span
+          onMouseEnter={() => setHovered('discard')}
+          onMouseLeave={() => setHovered(null)}
+          style={{ cursor: 'default', position: 'relative' }}
+        >
+          Disc: {discardPileCount}
+          <Tooltip text="DISCARD PILE — Played and discarded cards go here. Reshuffled into draw pile when it's empty." visible={hovered === 'discard'} />
+        </span>
+        {exhaustPileCount > 0 && (
+          <span
+            onMouseEnter={() => setHovered('exhaust')}
+            onMouseLeave={() => setHovered(null)}
+            style={{ cursor: 'default', position: 'relative' }}
+          >
+            Exh: {exhaustPileCount}
+            <Tooltip text="EXHAUST PILE — Cards removed from play for the rest of this combat. Cannot be drawn again." visible={hovered === 'exhaust'} />
+          </span>
+        )}
       </div>
     </div>
   );
@@ -150,15 +230,15 @@ export function PlayerStatus({
 
 function getStatusDescription(status: string): string {
   switch (status) {
-    case 'hallucination': return 'Curse cards in your deck deal 3 damage when in hand at end of turn. Grounded blocks it.';
-    case 'grounded': return 'Absorbs hallucination triggers. Each trigger removes 1 stack.';
-    case 'context': return 'Adds bonus damage/firewall to your next card. Consumed after use.';
-    case 'vulnerable': return 'Take 50% more damage. Wears off by 1 each turn.';
-    case 'weak': return 'Deal 25% less damage. Wears off by 1 each turn.';
-    case 'throttled': return 'Reduced energy next turn.';
-    case 'confused': return 'Random card costs are shuffled.';
-    case 'overfit': return 'Your cards become less effective over time.';
-    default: return '';
+    case 'hallucination': return 'HALLUCINATION — Curse cards in your deck. Deal 3 damage when in your hand at end of turn. Grounded blocks it.';
+    case 'grounded': return 'GROUNDED — Absorbs hallucination curse triggers. Each trigger removes 1 stack.';
+    case 'context': return 'CONTEXT — Adds bonus damage or firewall to your next card that deals damage or gives firewall. Consumed after use.';
+    case 'vulnerable': return 'VULNERABLE — Take 50% more damage from attacks. Reduces by 1 each turn.';
+    case 'weak': return 'WEAK — Deal 25% less damage with attacks. Reduces by 1 each turn.';
+    case 'throttled': return 'THROTTLED — Lose this much energy at the start of next turn.';
+    case 'confused': return 'CONFUSED — Each stack randomizes 1 card cost (0-3) when drawn.';
+    case 'overfit': return 'OVERFIT — Playing the same card twice in a turn halves its damage.';
+    default: return status;
   }
 }
 
@@ -217,11 +297,11 @@ function getPowerLabel(type: string, amount?: number): string {
 
 function getPowerDescription(type: string, amount?: number): string {
   switch (type) {
-    case 'blockPerTurn': return `Gain ${amount} Firewall at the start of each turn.`;
-    case 'drawPerTurn': return `Draw ${amount} additional card${amount !== 1 ? 's' : ''} at the start of each turn.`;
-    case 'reduceDamage': return `Enemies deal ${amount} less damage per hit.`;
-    case 'firstCardFree': return 'The first card you play each turn costs 0 energy.';
-    case 'attackSplash': return `When you play an Attack, deal ${amount} damage to ALL enemies.`;
+    case 'blockPerTurn': return `MONITORING — Gain ${amount} Firewall at the start of each turn.`;
+    case 'drawPerTurn': return `AUTO-COMPLETE — Draw ${amount} additional card${amount !== 1 ? 's' : ''} at the start of each turn.`;
+    case 'reduceDamage': return `RATE LIMITER — Enemies deal ${amount} less damage per hit.`;
+    case 'firstCardFree': return 'BATCH PROCESSING — The first card you play each turn costs 0 energy.';
+    case 'attackSplash': return `ENSEMBLE MODEL — When you play an Attack, deal ${amount} damage to ALL enemies.`;
     default: return '';
   }
 }

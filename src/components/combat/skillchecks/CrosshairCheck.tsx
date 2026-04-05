@@ -30,7 +30,7 @@ export function CrosshairCheck({ onResult }: { onResult: (multiplier: number) =>
     // Distance from center (50,50) — max ~45
     const dist = Math.sqrt((pos.x - 50) ** 2 + (pos.y - 50) ** 2);
     const mult = dist < 8 ? 1.5 : dist < 18 ? 1.2 : dist < 30 ? 1.0 : dist < 40 ? 0.7 : 0.4;
-    setTimeout(() => onResult(mult), 400);
+    setTimeout(() => onResult(mult), 80);
   };
 
   return (

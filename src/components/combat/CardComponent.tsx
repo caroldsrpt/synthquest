@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { CardInstance } from '../../game/data/types';
 import { CARDS } from '../../game/data/cards';
 import { getCardCost, getCardName, getCardDescription } from '../../utils/cardUtils';
@@ -28,8 +29,24 @@ interface CardComponentProps {
   small?: boolean;
 }
 
+const KEYWORD_DESCRIPTIONS: Record<string, string> = {
+  exhaust: 'EXHAUST — Removed from play after use. Cannot be drawn again this combat.',
+  retain: 'RETAIN — Stays in your hand at end of turn instead of being discarded.',
+  power: 'POWER — Plays once, effect lasts the entire combat.',
+};
+
+const CATEGORY_DESCRIPTIONS: Record<string, string> = {
+  text: 'TEXT — Generation and language model cards',
+  structure: 'STRUCTURE — Defense, grounding, and data cards',
+  logic: 'LOGIC — Reasoning, tools, and planning cards',
+  vision: 'VISION — Analysis and pattern recognition cards',
+  noise: 'NOISE — Chaos, randomness, and risk cards',
+  curse: 'CURSE — Harmful cards that clog your deck',
+};
+
 export function CardComponent({ card, index, selected, playable, onClick, small }: CardComponentProps) {
   const def = CARDS[card.defId];
+  const [showTooltip, setShowTooltip] = useState(false);
   if (!def) return null;
 
   const cost = getCardCost(card);
@@ -44,6 +61,8 @@ export function CardComponent({ card, index, selected, playable, onClick, small 
   return (
     <div
       onClick={() => playable && onClick(index)}
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
       style={{
         width: w,
         height: h,
@@ -182,6 +201,49 @@ export function CardComponent({ card, index, selected, playable, onClick, small 
 
       {/* Rarity bar */}
       <div style={{ height: 3, background: rarityColor, opacity: 0.7 }} />
+
+      {/* Hover tooltip with expanded details */}
+      {showTooltip && !small && (
+        <div style={{
+          position: 'absolute',
+          bottom: '105%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          padding: '10px 14px',
+          background: 'rgba(12, 8, 24, 0.97)',
+          border: `2px solid ${catColor}`,
+          boxShadow: `0 0 16px rgba(0,0,0,0.8), 0 0 8px ${catColor}33`,
+          fontFamily: "'Press Start 2P', monospace",
+          minWidth: 200,
+          maxWidth: 280,
+          zIndex: 100,
+          pointerEvents: 'none',
+        }}>
+          <div style={{ fontSize: 7, color: catColor, marginBottom: 6, letterSpacing: 1, textTransform: 'uppercase' }}>
+            {CATEGORY_DESCRIPTIONS[def.category] || def.category}
+          </div>
+          <div style={{ fontSize: 9, color: '#e0d8c8', marginBottom: 4, lineHeight: 1.5 }}>
+            {desc}
+          </div>
+          <div style={{ fontSize: 7, color: '#8a7a66', marginBottom: 4 }}>
+            Cost: {cost} energy | Rarity: {def.rarity} | Target: {def.target === 'singleEnemy' ? 'Single enemy' : def.target === 'allEnemies' ? 'All enemies' : def.target === 'self' ? 'Self' : 'None'}
+          </div>
+          {def.keywords && def.keywords.length > 0 && (
+            <div style={{ borderTop: '1px solid #3d2d5c', paddingTop: 4, marginTop: 4 }}>
+              {def.keywords.filter((k) => k !== 'autoplay').map((kw) => (
+                <div key={kw} style={{ fontSize: 7, color: '#9ca3af', lineHeight: 1.6 }}>
+                  {KEYWORD_DESCRIPTIONS[kw] || kw.toUpperCase()}
+                </div>
+              ))}
+            </div>
+          )}
+          {card.upgraded && (
+            <div style={{ fontSize: 7, color: '#fbbf24', marginTop: 4 }}>
+              UPGRADED
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
