@@ -783,7 +783,7 @@ export function CombatScreen() {
                 runState.addPotion({ id: uid(), defId: potionDef.id });
               }
             }
-            combat.endCombat();
+            // Set screen before ending combat to avoid intermediate render states
             if (currentNode?.type === 'boss' && runState.act < 3) {
               runState.advanceAct();
             } else if (currentNode?.type === 'boss' && runState.act >= 3) {
@@ -791,6 +791,7 @@ export function CombatScreen() {
             } else {
               run.setScreen('map');
             }
+            combat.endCombat();
           }}
           onPickCard={(defId) => {
             const inst = createCardInstance(defId);
@@ -803,22 +804,21 @@ export function CombatScreen() {
         />
       )}
 
-      {/* First-draw card tip tooltip */}
+      {/* First-draw card tip tooltip — positioned at top-left to avoid blocking combat */}
       {activeTip && (
         <div
           onClick={dismissTip}
           style={{
             position: 'absolute',
-            bottom: showHand ? 250 : 100,
-            left: '50%',
-            transform: 'translateX(-50%)',
+            top: 56,
+            left: 16,
             zIndex: 40,
             background: 'rgba(12, 8, 24, 0.95)',
             border: '3px solid #6b4fa0',
             boxShadow:
               'inset 0 0 0 2px #1a1130, inset 0 0 0 4px #3d2d5c, 0 0 30px rgba(107,79,160,0.5)',
             padding: '16px 24px 12px',
-            maxWidth: 480,
+            maxWidth: 360,
             textAlign: 'center',
             cursor: 'pointer',
             animation: 'tipFadeIn 0.3s ease-out',

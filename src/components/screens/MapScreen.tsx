@@ -135,7 +135,7 @@ export function MapScreen() {
   if (run.map.length === 0) return null;
 
   const headerH = 52;
-  const legendH = 36;
+  const legendH = 44;
   const padY = 24;
   const mapH = dims.h - headerH - legendH - padY * 2;
   const mapW = dims.w;
@@ -262,7 +262,7 @@ export function MapScreen() {
           const y = getY(node.row);
           const clickable = canVisit(node);
           const color = NODE_COLORS[node.type];
-          const size = node.type === 'boss' ? 64 : 52;
+          const size = node.type === 'boss' ? 80 : 64;
 
           return (
             <div
@@ -299,7 +299,7 @@ export function MapScreen() {
               }}
             >
               <span style={{
-                fontSize: node.type === 'boss' ? 28 : 22,
+                fontSize: node.type === 'boss' ? 34 : 28,
                 filter: node.visited ? 'grayscale(1) opacity(0.3)' : clickable ? 'none' : 'grayscale(1) opacity(0.25)',
               }}>
                 {NODE_ICONS[node.type]}
@@ -310,7 +310,7 @@ export function MapScreen() {
                   position: 'absolute',
                   top: size + 4,
                   fontFamily: PIXEL,
-                  fontSize: 8,
+                  fontSize: 10,
                   color,
                   textShadow: PX_OUTLINE,
                   whiteSpace: 'nowrap',
@@ -340,11 +340,11 @@ export function MapScreen() {
         boxShadow: 'inset 0 2px 0 #3d2d5c, 0 -4px 12px rgba(0,0,0,0.5)',
         zIndex: 2,
         fontFamily: PIXEL,
-        fontSize: 7,
+        fontSize: 9,
       }}>
         {Object.entries(NODE_ICONS).map(([type, icon]) => (
-          <span key={type} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ fontSize: 12 }}>{icon}</span>
+          <span key={type} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ fontSize: 14 }}>{icon}</span>
             <span style={{ color: NODE_COLORS[type], textShadow: PX_OUTLINE, letterSpacing: 1 }}>
               {type}
             </span>

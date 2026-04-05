@@ -48,11 +48,11 @@ export function S2_Temperature({ onComplete }: { onComplete: () => void }) {
   };
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: 32, maxWidth: 600, margin: '0 auto', width: '100%' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, padding: 32, maxWidth: 680, margin: '0 auto', width: '100%' }}>
 
       {/* Intro context */}
       <div style={{ textAlign: 'center', marginBottom: 4 }}>
-        <p style={{ fontSize: 13, color: '#9ca3af', lineHeight: 1.7 }}>
+        <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.7 }}>
           Remember how the AI picks the <strong style={{ color: '#a78bfa' }}>most likely</strong> next word?
           Temperature controls <em>how adventurous</em> those picks are.
         </p>
@@ -60,7 +60,7 @@ export function S2_Temperature({ onComplete }: { onComplete: () => void }) {
 
       {/* Customer */}
       <div style={bubbleStyle}>
-        <span style={{ fontSize: 11, color: '#6b7280', display: 'block', marginBottom: 4 }}>{'\uD83D\uDC64'} Customer:</span>
+        <span style={{ fontSize: 13, color: '#6b7280', display: 'block', marginBottom: 4 }}>{'\uD83D\uDC64'} Customer:</span>
         "Can you describe your new chocolate cake?"
       </div>
 
@@ -112,8 +112,8 @@ export function S2_Temperature({ onComplete }: { onComplete: () => void }) {
                 }}
               />
               <div style={{ fontSize: 18, marginBottom: 2 }}>{r.emoji}</div>
-              <div style={{ fontSize: 12, fontWeight: 'bold', color: r.color }}>{r.label}</div>
-              <div style={{ fontSize: 10, color: '#6b7280', marginTop: 4, lineHeight: 1.4 }}>{r.description}</div>
+              <div style={{ fontSize: 14, fontWeight: 'bold', color: r.color }}>{r.label}</div>
+              <div style={{ fontSize: 12, color: '#6b7280', marginTop: 4, lineHeight: 1.4 }}>{r.description}</div>
             </div>
           );
         })}
@@ -142,10 +142,10 @@ export function S2_Temperature({ onComplete }: { onComplete: () => void }) {
         padding: 20, width: '100%',
         transition: 'border-color 0.3s',
       }}>
-        <div style={{ fontSize: 11, color: '#7b68ee', marginBottom: 8 }}>
+        <div style={{ fontSize: 13, color: '#7b68ee', marginBottom: 8 }}>
           {'\uD83E\uDD16'} AI Response:
         </div>
-        <div style={{ fontSize: 14, lineHeight: 1.7, color: '#e0e0e0' }}>
+        <div style={{ fontSize: 15, lineHeight: 1.7, color: '#e0e0e0' }}>
           {response.text}
         </div>
         {tempLevel === 2 && (
@@ -160,7 +160,7 @@ export function S2_Temperature({ onComplete }: { onComplete: () => void }) {
 
       {/* Real-world context */}
       <div style={{
-        fontSize: 12, color: '#7b68ee', lineHeight: 1.6, textAlign: 'center',
+        fontSize: 14, color: '#7b68ee', lineHeight: 1.6, textAlign: 'center',
         padding: '8px 16px', background: '#7b68ee11', borderRadius: 8, width: '100%',
       }}>
         {response.realWorld}
@@ -176,7 +176,7 @@ export function S2_Temperature({ onComplete }: { onComplete: () => void }) {
           borderRadius: 8,
           width: '100%',
         }}>
-          <div style={{ fontSize: 13, color: '#fbbf24', marginBottom: 6 }}>
+          <div style={{ fontSize: 14, color: '#fbbf24', marginBottom: 6 }}>
             {'\uD83D\uDC46'} Try all 3 temperatures to continue
           </div>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
@@ -211,8 +211,8 @@ export function S2_Temperature({ onComplete }: { onComplete: () => void }) {
 }
 
 const bubbleStyle: React.CSSProperties = {
-  background: '#1e2030', borderRadius: '16px 16px 16px 4px', padding: '12px 20px',
-  fontSize: 15, color: '#e0e0e0', border: '1px solid #2d2d5e', width: '100%',
+  background: '#1e2030', borderRadius: '16px 16px 16px 4px', padding: '14px 24px',
+  fontSize: 16, color: '#e0e0e0', border: '1px solid #2d2d5e', width: '100%',
 };
 
 const btnStyle: React.CSSProperties = {
