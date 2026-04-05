@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useRunStore } from '../../stores/runStore';
 import { getCardPool, CARDS } from '../../game/data/cards';
+import { POTIONS } from '../../game/data/potions';
+import { SHOP_POTION_COMMON, SHOP_POTION_UNCOMMON, SHOP_POTION_RARE } from '../../utils/constants';
 import { createCardInstance } from '../../utils/cardUtils';
 import { CardComponent } from '../combat/CardComponent';
 import {
@@ -10,7 +12,8 @@ import {
   SHOP_CARD_REMOVAL_BASE,
   SHOP_CARD_REMOVAL_INCREMENT,
 } from '../../utils/constants';
-import type { CardDef, CardInstance } from '../../game/data/types';
+import type { CardDef, CardInstance, PotionDef } from '../../game/data/types';
+import { uid } from '../../utils/random';
 
 const PIXEL_FONT = "'Press Start 2P', monospace";
 const PANEL_BORDER = '3px solid #6b4fa0';
@@ -90,6 +93,22 @@ export function ShopScreen() {
   const [mode, setMode] = useState<'buy' | 'remove'>('buy');
   const [message, setMessage] = useState<string | null>(null);
 
+  // Shop potions: 2 random potions
+  const [shopPotions, setShopPotions] = useState<{ def: PotionDef; price: number; sold: boolean }[]>(() => {
+    const allPotions = Object.values(POTIONS);
+    const picks: typeof allPotions = [];
+    const pool = [...allPotions];
+    for (let i = 0; i < 2 && pool.length > 0; i++) {
+      const idx = Math.floor(Math.random() * pool.length);
+      picks.push(pool.splice(idx, 1)[0]);
+    }
+    return picks.map((p) => ({
+      def: p,
+      price: p.rarity === 'rare' ? SHOP_POTION_RARE : p.rarity === 'uncommon' ? SHOP_POTION_UNCOMMON : SHOP_POTION_COMMON,
+      sold: false,
+    }));
+  });
+
   const removalPrice = SHOP_CARD_REMOVAL_BASE + cardRemovalCount * SHOP_CARD_REMOVAL_INCREMENT;
 
   const showMessage = (text: string) => {
@@ -109,6 +128,17 @@ export function ShopScreen() {
     setShopItems((prev) =>
       prev.map((it, i) => (i === index ? { ...it, sold: true } : it))
     );
+    showMessage(`Bought ${item.def.name}!`);
+  };
+
+  const handleBuyPotion = (index: number) => {
+    const item = shopPotions[index];
+    if (!item || item.sold) return;
+    if (gold < item.price) { showMessage('Not enough gold!'); return; }
+    if (run.potions.length >= run.maxPotionSlots) { showMessage('Potion slots full!'); return; }
+    run.spendGold(item.price);
+    run.addPotion({ id: uid(), defId: item.def.id });
+    setShopPotions((prev) => prev.map((it, i) => i === index ? { ...it, sold: true } : it));
     showMessage(`Bought ${item.def.name}!`);
   };
 
@@ -277,6 +307,37 @@ export function ShopScreen() {
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Potions section */}
+            <div style={{ marginTop: 32, fontSize: 10, color: '#8a7a66', marginBottom: 16, letterSpacing: 1, textAlign: 'center' }}>
+              Potions ({run.potions.length}/{run.maxPotionSlots} slots)
+            </div>
+            <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
+              {shopPotions.map((item, i) => {
+                const rarityColor = item.def.rarity === 'rare' ? '#fbbf24' : item.def.rarity === 'uncommon' ? '#60a5fa' : '#9ca3af';
+                return (
+                  <div
+                    key={item.def.id}
+                    onClick={() => handleBuyPotion(i)}
+                    style={{
+                      padding: '12px 16px',
+                      border: `2px solid ${item.sold ? '#3d2d5c' : rarityColor}`,
+                      background: item.sold ? 'rgba(12,8,24,0.4)' : 'rgba(12,8,24,0.8)',
+                      opacity: item.sold ? 0.5 : 1,
+                      cursor: item.sold ? 'default' : 'pointer',
+                      minWidth: 140,
+                      textAlign: 'center',
+                    }}
+                  >
+                    <div style={{ fontSize: 9, color: rarityColor, marginBottom: 4, letterSpacing: 1 }}>{item.def.name}</div>
+                    <div style={{ fontSize: 7, color: '#c4b89a', lineHeight: 1.5, marginBottom: 6 }}>{item.def.description}</div>
+                    <div style={{ fontSize: 8, color: item.sold ? '#6b7280' : GOLD_COLOR }}>
+                      {item.sold ? 'SOLD' : `${item.price} G`}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

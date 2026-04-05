@@ -1,228 +1,27 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useCombatStore } from '../../stores/combatStore';
 import { useRunStore } from '../../stores/runStore';
 import { CARDS } from '../../game/data/cards';
 import { getNextIntent, ENEMIES } from '../../game/data/enemies';
 import { getCardCost, getCardEffects, getCardName, createCardInstance } from '../../utils/cardUtils';
-import { HALLUCINATION_TRIGGER_CHANCE, HALLUCINATION_SELF_DAMAGE, CONTEXT_CAP } from '../../utils/constants';
-import { randInt } from '../../utils/random';
+import { resolveCardEffects, type EffectAnimations } from '../../game/systems/effectResolver';
+import { executeEnemyIntent as execEnemyIntent, processHallucinationCards, tickEnemyDebuffs, type EnemyAnimations } from '../../game/systems/enemyAI';
 import { HandDisplay } from '../combat/HandDisplay';
 import { EnemyDisplay } from '../combat/EnemyDisplay';
 import { PlayerStatus } from '../combat/PlayerStatus';
-import { CardComponent } from '../combat/CardComponent';
 import { CARD_TIPS } from '../../game/data/cardTips';
-import type { CardInstance, CardEffect, EnemyInstance } from '../../game/data/types';
-
-type RewardStep = 'gold' | 'cards' | 'done';
-
-function RewardOverlay({
-  goldReward,
-  cardRewards,
-  onFinish,
-  onPickCard,
-}: {
-  goldReward: number;
-  cardRewards: import('../../game/data/types').CardDef[];
-  onFinish: () => void;
-  onPickCard: (defId: string) => void;
-}) {
-  const [step, setStep] = useState<RewardStep>('gold');
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const [pickedIndex, setPickedIndex] = useState<number | null>(null);
-
-  // Create stable CardInstance objects for rendering via CardComponent
-  const rewardInstances = useMemo(
-    () => cardRewards.map((def) => createCardInstance(def.id)),
-    [cardRewards],
-  );
-
-  const handlePickCard = (index: number) => {
-    if (pickedIndex !== null) return;
-    setPickedIndex(index);
-    onPickCard(cardRewards[index].id);
-    // Brief delay so the player sees which card they picked before showing Continue
-    setTimeout(() => setStep('done'), 400);
-  };
-
-  const handleSkip = () => {
-    setStep('done');
-  };
-
-  const panelStyle: React.CSSProperties = {
-    background: 'rgba(12, 8, 24, 0.95)',
-    border: '3px solid #6b4fa0',
-    boxShadow:
-      'inset 0 0 0 2px #1a1130, inset 0 0 0 4px #3d2d5c, 0 0 40px rgba(107,79,160,0.4)',
-    padding: '40px 60px',
-    textAlign: 'center',
-    fontFamily: "'Press Start 2P', monospace",
-    maxWidth: '90vw',
-  };
-
-  const btnStyle: React.CSSProperties = {
-    padding: '14px 36px',
-    background: 'rgba(12, 8, 24, 0.85)',
-    border: '3px solid #6b4fa0',
-    boxShadow: 'inset 0 0 0 2px #1a1130, inset 0 0 0 4px #3d2d5c',
-    color: '#c4b89a',
-    fontFamily: "'Press Start 2P', monospace",
-    fontSize: 14,
-    cursor: 'pointer',
-    letterSpacing: 2,
-  };
-
-  return (
-    <div
-      style={{
-        position: 'absolute',
-        inset: 0,
-        background: 'rgba(0, 0, 0, 0.7)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 50,
-      }}
-    >
-      <div style={panelStyle}>
-        {/* VICTORY heading — always visible */}
-        <div
-          style={{
-            fontSize: 28,
-            fontWeight: 'bold',
-            color: '#4ade80',
-            textShadow:
-              '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 0 20px rgba(74,222,128,0.5)',
-            marginBottom: 16,
-            letterSpacing: 3,
-          }}
-        >
-          VICTORY!
-        </div>
-
-        {/* Gold reward — always visible */}
-        <div
-          style={{
-            fontSize: 16,
-            color: '#fbbf24',
-            textShadow:
-              '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000',
-            marginBottom: 24,
-          }}
-        >
-          + {goldReward} Gold
-        </div>
-
-        {/* Step: gold — show button to proceed to card pick */}
-        {step === 'gold' && cardRewards.length > 0 && (
-          <button onClick={() => setStep('cards')} style={btnStyle}>
-            Choose a Card
-          </button>
-        )}
-
-        {/* Step: gold — no card rewards, go straight to map */}
-        {step === 'gold' && cardRewards.length === 0 && (
-          <button onClick={onFinish} style={btnStyle}>
-            Continue to Map
-          </button>
-        )}
-
-        {/* Step: cards — show 3 card choices */}
-        {step === 'cards' && (
-          <>
-            <div
-              style={{
-                fontSize: 12,
-                color: '#a882ff',
-                marginBottom: 20,
-                letterSpacing: 1,
-              }}
-            >
-              Pick a card to add to your deck
-            </div>
-
-            <div
-              style={{
-                display: 'flex',
-                gap: 24,
-                justifyContent: 'center',
-                marginBottom: 24,
-              }}
-            >
-              {rewardInstances.map((inst, i) => (
-                <div
-                  key={inst.id}
-                  onMouseEnter={() => setHoveredIndex(i)}
-                  onMouseLeave={() => setHoveredIndex(null)}
-                  style={{
-                    transition: 'transform 0.2s, filter 0.2s',
-                    transform:
-                      hoveredIndex === i
-                        ? 'translateY(-12px) scale(1.08)'
-                        : pickedIndex === i
-                          ? 'translateY(-8px) scale(1.05)'
-                          : 'none',
-                    filter:
-                      hoveredIndex === i
-                        ? 'drop-shadow(0 0 16px #a882ff) drop-shadow(0 0 8px #6b4fa0)'
-                        : pickedIndex === i
-                          ? 'drop-shadow(0 0 20px #4ade80)'
-                          : 'none',
-                    opacity: pickedIndex !== null && pickedIndex !== i ? 0.4 : 1,
-                    cursor: pickedIndex === null ? 'pointer' : 'default',
-                  }}
-                >
-                  <CardComponent
-                    card={inst}
-                    index={i}
-                    selected={pickedIndex === i}
-                    playable={pickedIndex === null}
-                    onClick={() => handlePickCard(i)}
-                  />
-                </div>
-              ))}
-            </div>
-
-            {pickedIndex === null && (
-              <button
-                onClick={handleSkip}
-                style={{
-                  ...btnStyle,
-                  fontSize: 10,
-                  padding: '10px 24px',
-                  border: '2px solid #3d2d5c',
-                  color: '#6b7280',
-                }}
-              >
-                Skip
-              </button>
-            )}
-          </>
-        )}
-
-        {/* Step: done — show continue */}
-        {step === 'done' && (
-          <>
-            {pickedIndex !== null && (
-              <div
-                style={{
-                  fontSize: 11,
-                  color: '#4ade80',
-                  marginBottom: 20,
-                  letterSpacing: 1,
-                }}
-              >
-                Added {cardRewards[pickedIndex]?.name || 'card'} to your deck!
-              </div>
-            )}
-            <button onClick={onFinish} style={btnStyle}>
-              Continue to Map
-            </button>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
+import { RewardOverlay } from '../combat/RewardOverlay';
+import { DeckViewerOverlay } from '../shared/DeckViewerOverlay';
+import { RelicBar } from '../shared/RelicBar';
+import { PotionSlots } from '../combat/PotionSlots';
+import { SkillCheckOverlay } from '../combat/SkillCheckOverlay';
+import { ByteSpeechBubble } from '../combat/ByteSpeechBubble';
+import { CARD_SKILL_CHECKS } from '../../game/data/skillChecks';
+import type { SkillCheckType } from '../../game/data/skillChecks';
+import { POTIONS, generatePotionDrop } from '../../game/data/potions';
+import { POTION_DROP_RATE_NORMAL, POTION_DROP_RATE_ELITE, POTION_DROP_RATE_BOSS } from '../../utils/constants';
+import { uid } from '../../utils/random';
+import type { CardInstance } from '../../game/data/types';
 
 export function CombatScreen() {
   const combat = useCombatStore();
@@ -236,6 +35,12 @@ export function CombatScreen() {
 
   // First-draw card tip system
   const [activeTip, setActiveTip] = useState<string | null>(null);
+  const [showDeck, setShowDeck] = useState(false);
+  const [pendingSkillCheck, setPendingSkillCheck] = useState<{
+    checkType: SkillCheckType;
+    handIndex: number;
+    targetEnemyId?: string;
+  } | null>(null);
   const tipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Check for first-draw tips whenever hand changes during playerTurn
@@ -321,6 +126,167 @@ export function CombatScreen() {
     ? 'Deals 3 damage when in hand at end of turn'
     : 'Corrupts your hand — deals 3 damage at end of turn';
 
+  // Apply relic effects at start of turn
+  const applyRelicTurnStart = useCallback(() => {
+    const r = useRunStore.getState();
+    const c = useCombatStore.getState();
+    // apiKey: add API Call card to hand on turn 1
+    if (r.relics.includes('apiKey') && c.turn === 1) {
+      const inst = createCardInstance('apiCall');
+      inst.costOverride = 0;
+      useCombatStore.getState().addToHand(inst);
+    }
+    // rubberDuck: +1 Context each turn
+    if (r.relics.includes('rubberDuck')) {
+      useCombatStore.getState().addPlayerStatus({ status: 'context', stacks: 1 });
+    }
+    // safetyFilter: +2 Grounded on turn 1
+    if (r.relics.includes('safetyFilter') && c.turn === 1) {
+      useCombatStore.getState().addPlayerStatus({ status: 'grounded', stacks: 2 });
+    }
+  }, []);
+
+  // Use a potion (free action, no energy cost)
+  const handleUsePotion = useCallback((potionId: string) => {
+    if (combat.phase !== 'playerTurn') return;
+    const potion = run.potions.find((p) => p.id === potionId);
+    if (!potion) return;
+    const def = POTIONS[potion.defId];
+    if (!def) return;
+
+    // Resolve potion effect
+    switch (potion.defId) {
+      case 'warmCocoa':
+        run.heal(15);
+        addFloat('player', '+15 HP', '#4ade80');
+        break;
+      case 'espressoShot':
+        combat.drawCards(3);
+        break;
+      case 'sourdoughStarter':
+        combat.gainFirewall(10);
+        showPlayerDefend(10);
+        break;
+      case 'pepperFlakes': {
+        const target = useCombatStore.getState().enemies.find((e) => e.hp > 0);
+        if (target) combat.addEnemyStatus(target.id, { status: 'vulnerable', stacks: 3 });
+        break;
+      }
+      case 'staleBread': {
+        const target = useCombatStore.getState().enemies.find((e) => e.hp > 0);
+        if (target) combat.addEnemyStatus(target.id, { status: 'weak', stacks: 2 });
+        break;
+      }
+      case 'doubleShotLatte':
+        combat.gainEnergy(2);
+        break;
+      case 'flashFrozenDough':
+        // Halve enemy damage handled via a temporary status — use weak as approximation
+        for (const e of useCombatStore.getState().enemies) {
+          if (e.hp > 0) combat.addEnemyStatus(e.id, { status: 'weak', stacks: 2 });
+        }
+        break;
+      case 'mysteryMacaron': {
+        const pool = Object.values(CARDS).filter((c) => c.rarity === 'uncommon');
+        for (let i = 0; i < 2; i++) {
+          if (pool.length === 0) break;
+          const chosen = pool[Math.floor(Math.random() * pool.length)];
+          const inst = createCardInstance(chosen.id);
+          inst.costOverride = 0;
+          combat.addToHand(inst);
+        }
+        break;
+      }
+      case 'goldenCroissant':
+        // Simplified: gain 3 stacks of context (amplifies next 3 effects)
+        combat.addPlayerStatus({ status: 'context', stacks: 3 });
+        break;
+      case 'secretRecipe': {
+        const runState = useRunStore.getState();
+        const nonUpgraded = runState.deck.filter((c) => !c.upgraded && CARDS[c.defId]?.rarity !== 'starter');
+        if (nonUpgraded.length > 0) {
+          const pick = nonUpgraded[Math.floor(Math.random() * nonUpgraded.length)];
+          runState.upgradeCardInDeck(pick.id);
+        }
+        break;
+      }
+    }
+
+    combat.addLog(`Used ${def.name}`);
+    run.removePotion(potionId);
+  }, [combat, run]);
+
+  // Handle skill check completion — resolve the pending card with multiplier
+  const handleSkillCheckResult = useCallback((multiplier: number) => {
+    if (!pendingSkillCheck) return;
+    const { handIndex, targetEnemyId } = pendingSkillCheck;
+    const card = combat.hand[handIndex];
+    if (!card) { setPendingSkillCheck(null); return; }
+    const def = CARDS[card.defId];
+    if (!def) { setPendingSkillCheck(null); return; }
+
+    const effects = getCardEffects(card);
+    const name = getCardName(card);
+    combat.addLog(`Played ${name} (${Math.round(multiplier * 100)}% power)`);
+    combat.trackCardPlayed(card.defId, def.category);
+
+    // Apply multiplier to damage/block effects
+    const scaledEffects = effects.map((e) => {
+      if (e.type === 'damage') return { ...e, amount: Math.floor(e.amount * multiplier) };
+      if (e.type === 'damageAll') return { ...e, amount: Math.floor(e.amount * multiplier) };
+      if (e.type === 'firewall') return { ...e, amount: Math.floor(e.amount * multiplier) };
+      return e;
+    });
+
+    const anim: EffectAnimations = { showPlayerAttack, showPlayerDefend, showEnemyHit, addFloat };
+    resolveCardEffects(scaledEffects, card, anim, targetEnemyId);
+
+    // Continue with normal post-play flow
+    const isAttackCard = effects.some((e) =>
+      e.type === 'damage' || e.type === 'damageRandom' || e.type === 'damageAll'
+      || e.type === 'conditionalDamage' || e.type === 'damagePerExhaust'
+    );
+    if (isAttackCard) {
+      const splashState = useCombatStore.getState();
+      for (const power of splashState.activePowers) {
+        if (power.type === 'attackSplash' && power.amount) {
+          for (const enemy of splashState.enemies) {
+            if (enemy.hp > 0 && enemy.id !== targetEnemyId) {
+              combat.damageEnemy(enemy.id, power.amount);
+              showEnemyHit(enemy.id, power.amount);
+            }
+          }
+        }
+      }
+    }
+
+    combat.playCard(handIndex, targetEnemyId);
+    if (def.keywords?.includes('exhaust') || def.keywords?.includes('power')) {
+      useCombatStore.setState((s) => ({ exhaustPile: [...s.exhaustPile, card] }));
+    } else {
+      combat.addToDiscard(card);
+    }
+
+    // Relic: orchestrationHub
+    if (useRunStore.getState().relics.includes('orchestrationHub')) {
+      const cats = useCombatStore.getState().categoryCountThisTurn;
+      const uniqueCats = Object.values(cats).filter((c) => c > 0).length;
+      if (uniqueCats >= 3) {
+        for (const e of useCombatStore.getState().enemies) {
+          if (e.hp > 0) { useCombatStore.getState().damageEnemy(e.id, 5); showEnemyHit(e.id, 5); }
+        }
+      }
+    }
+
+    const state = useCombatStore.getState();
+    if (state.enemies.every((e) => e.hp <= 0)) {
+      setMessage('Victory!');
+      combat.setPhase('reward');
+    }
+
+    setPendingSkillCheck(null);
+  }, [combat, pendingSkillCheck]);
+
   // Auto-start first turn
   useEffect(() => {
     if (combat.active && combat.phase === 'start') {
@@ -329,6 +295,7 @@ export function CombatScreen() {
         : 'Combat started!');
       const timer = setTimeout(() => {
         combat.startTurn();
+        applyRelicTurnStart();
         setMessage(null);
       }, 800);
       return () => clearTimeout(timer);
@@ -376,15 +343,23 @@ export function CombatScreen() {
     const cost = (hasFirstCardFree && isFirstCard) ? 0 : getCardCost(card);
     if (!combat.spendEnergy(cost)) return;
 
+    // Check for skill check before resolving
+    const checkType = CARD_SKILL_CHECKS[card.defId];
+    if (checkType && !pendingSkillCheck) {
+      // Show skill check overlay — will resolve effects on completion
+      setPendingSkillCheck({ checkType, handIndex, targetEnemyId });
+      // Energy already spent, but don't resolve yet
+      return;
+    }
+
     const effects = getCardEffects(card);
     const name = getCardName(card);
     combat.addLog(`Played ${name}`);
     combat.trackCardPlayed(card.defId, def.category);
 
-    // Resolve effects
-    for (const effect of effects) {
-      resolveEffect(effect, card, targetEnemyId);
-    }
+    // Resolve effects (apply skill check multiplier if active)
+    const anim: EffectAnimations = { showPlayerAttack, showPlayerDefend, showEnemyHit, addFloat };
+    resolveCardEffects(effects, card, anim, targetEnemyId);
 
     // attackSplash power: when playing an attack card, deal X damage to all OTHER enemies
     const isAttackCard = effects.some((e) =>
@@ -417,6 +392,21 @@ export function CombatScreen() {
       combat.addToDiscard(card);
     }
 
+    // Relic: orchestrationHub — 3+ different categories this turn = 5 AoE damage
+    if (useRunStore.getState().relics.includes('orchestrationHub')) {
+      const cats = useCombatStore.getState().categoryCountThisTurn;
+      const uniqueCats = Object.values(cats).filter((c) => c > 0).length;
+      if (uniqueCats >= 3) {
+        for (const e of useCombatStore.getState().enemies) {
+          if (e.hp > 0) {
+            useCombatStore.getState().damageEnemy(e.id, 5);
+            showEnemyHit(e.id, 5);
+          }
+        }
+        combat.addLog('Orchestration Hub triggers! 5 damage to all enemies.');
+      }
+    }
+
     // Check if all enemies dead
     const state = useCombatStore.getState();
     if (state.enemies.every((e) => e.hp <= 0)) {
@@ -425,288 +415,11 @@ export function CombatScreen() {
     }
   }, [combat]);
 
-  const resolveEffect = useCallback((effect: CardEffect, card: CardInstance, targetEnemyId?: string) => {
-    const state = useCombatStore.getState();
-    const contextBonus = state.playerStatus.find((s) => s.status === 'context')?.stacks || 0;
-    let consumeContext = false;
-
-    // Overfit: repeated card plays this turn deal halved damage
-    const overfitStacks = state.playerStatus.find((s) => s.status === 'overfit')?.stacks || 0;
-    const priorPlays = state.cardsPlayedThisTurn.filter((id) => id === card.defId).length;
-    const isRepeatCard = overfitStacks > 0 && priorPlays > 1;
-
-    switch (effect.type) {
-      case 'damage': {
-        const target = targetEnemyId || state.enemies.find((e) => e.hp > 0)?.id;
-        if (!target) break;
-        let dmg = effect.amount + contextBonus;
-        consumeContext = true;
-        const enemy = state.enemies.find((e) => e.id === target);
-        if (enemy?.statusEffects.some((s) => s.status === 'vulnerable')) dmg = Math.floor(dmg * 1.5);
-        if (state.playerStatus.some((s) => s.status === 'weak')) dmg = Math.floor(dmg * 0.75);
-        if (isRepeatCard) dmg = Math.floor(dmg * 0.5);
-        const times = effect.times || 1;
-        showPlayerAttack();
-        for (let i = 0; i < times; i++) combat.damageEnemy(target, dmg);
-        showEnemyHit(target, dmg * times);
-        break;
-      }
-      case 'damageRandom': {
-        const target = targetEnemyId || state.enemies.find((e) => e.hp > 0)?.id;
-        if (!target) break;
-        const dmg = randInt(effect.min, effect.max) + contextBonus;
-        consumeContext = true;
-        showPlayerAttack();
-        combat.damageEnemy(target, dmg);
-        showEnemyHit(target, dmg);
-        break;
-      }
-      case 'damageAll': {
-        let dmg = effect.amount + contextBonus;
-        consumeContext = true;
-        if (state.playerStatus.some((s) => s.status === 'weak')) dmg = Math.floor(dmg * 0.75);
-        showPlayerAttack();
-        for (const enemy of state.enemies) {
-          if (enemy.hp > 0) {
-            combat.damageEnemy(enemy.id, dmg);
-            showEnemyHit(enemy.id, dmg);
-          }
-        }
-        break;
-      }
-      case 'damagePerExhaust': {
-        const dmg = state.exhaustPile.length * effect.multiplier + contextBonus;
-        consumeContext = true;
-        for (const enemy of state.enemies) {
-          if (enemy.hp > 0) combat.damageEnemy(enemy.id, dmg);
-        }
-        break;
-      }
-      case 'firewall':
-        combat.gainFirewall(effect.amount + contextBonus);
-        showPlayerDefend(effect.amount + contextBonus);
-        consumeContext = true;
-        break;
-      case 'firewallFromMissingHp': {
-        const missing = run.maxIntegrity - run.currentIntegrity;
-        combat.gainFirewall(missing + contextBonus);
-        showPlayerDefend(missing + contextBonus);
-        consumeContext = true;
-        break;
-      }
-      case 'draw':
-        combat.drawCards(effect.amount);
-        break;
-      case 'gainContext': {
-        const current = state.playerStatus.find((s) => s.status === 'context')?.stacks || 0;
-        if (card.defId === 'benchmark' && effect.amount === 0) {
-          const toAdd = Math.min(CONTEXT_CAP, current * 2) - current;
-          if (toAdd > 0) combat.addPlayerStatus({ status: 'context', stacks: toAdd });
-        } else {
-          const toAdd = Math.min(effect.amount, CONTEXT_CAP - current);
-          if (toAdd > 0) combat.addPlayerStatus({ status: 'context', stacks: toAdd });
-        }
-        break;
-      }
-      case 'gainGrounded':
-        combat.addPlayerStatus({ status: 'grounded', stacks: effect.amount });
-        break;
-      case 'applyStatus':
-        if (effect.target === 'self') {
-          combat.addPlayerStatus({ status: effect.status, stacks: effect.stacks });
-        } else if (targetEnemyId) {
-          combat.addEnemyStatus(targetEnemyId, { status: effect.status, stacks: effect.stacks });
-        }
-        break;
-      case 'removeStatus':
-        if (effect.status === 'all') combat.clearAllPlayerStatus();
-        else combat.removePlayerStatus(effect.status, 999);
-        break;
-      case 'conditionalDamage': {
-        const target = targetEnemyId || state.enemies.find((e) => e.hp > 0)?.id;
-        if (!target) break;
-        const enemy = state.enemies.find((e) => e.id === target);
-        if (enemy && enemy.hp > enemy.maxHp * 0.5) combat.damageEnemy(target, effect.amount);
-        break;
-      }
-      case 'addRandomCards': {
-        const pool = Object.values(CARDS).filter((c) => c.rarity === effect.rarity && c.id !== 'intentMirror' && c.rarity !== 'starter' && c.rarity !== 'curse');
-        for (let i = 0; i < effect.count; i++) {
-          if (pool.length === 0) break;
-          const chosen = pool[Math.floor(Math.random() * pool.length)];
-          const inst = createCardInstance(chosen.id);
-          if (effect.costOverride !== undefined) inst.costOverride = effect.costOverride;
-          combat.addToHand(inst);
-        }
-        break;
-      }
-      case 'power_blockPerTurn':
-        combat.addPower({ type: 'blockPerTurn', amount: effect.amount });
-        combat.addLog(`Gained Power: +${effect.amount} Firewall/turn`);
-        break;
-      case 'power_drawPerTurn':
-        combat.addPower({ type: 'drawPerTurn', amount: effect.amount });
-        combat.addLog(`Gained Power: +${effect.amount} Draw/turn`);
-        break;
-      case 'power_reduceDamage':
-        combat.addPower({ type: 'reduceDamage', amount: effect.amount });
-        combat.addLog(`Gained Power: -${effect.amount} incoming damage per hit`);
-        break;
-      case 'power_firstCardFree':
-        combat.addPower({ type: 'firstCardFree' });
-        combat.addLog('Gained Power: First card each turn costs 0');
-        break;
-      case 'power_attackSplash':
-        combat.addPower({ type: 'attackSplash', amount: effect.amount });
-        combat.addLog(`Gained Power: Attacks splash ${effect.amount} damage to all enemies`);
-        break;
-
-      case 'replayLastCard': {
-        const played = state.cardsPlayedThisTurn;
-        const lastDefId = played.length >= 1 ? played[played.length - 1] : null;
-        if (!lastDefId || lastDefId === card.defId) { combat.addLog('No valid card to replay.'); break; }
-        const lastDef = CARDS[lastDefId];
-        if (!lastDef) break;
-        const replayInst = createCardInstance(lastDefId);
-        replayInst.costOverride = 0;
-        combat.addLog(`Replaying ${lastDef.name}!`);
-        for (const re of getCardEffects(replayInst)) {
-          resolveEffect(re, replayInst, targetEnemyId);
-        }
-        useCombatStore.setState((s) => ({ exhaustPile: [...s.exhaustPile, replayInst] }));
-        break;
-      }
-
-      case 'playFromDraw': {
-        const maxPlays = effect.maxPlays || 1;
-        for (let i = 0; i < maxPlays; i++) {
-          const drawState = useCombatStore.getState();
-          if (drawState.drawPile.length === 0) break;
-          const topCard = drawState.drawPile[0];
-          const topDef = CARDS[topCard.defId];
-          if (!topDef) break;
-          useCombatStore.setState((s) => ({ drawPile: s.drawPile.slice(1) }));
-          topCard.costOverride = 0;
-          const dmgBefore = useCombatStore.getState().totalDamageDealtThisTurn;
-          combat.addLog(`Played ${topDef.name} from draw pile!`);
-          combat.trackCardPlayed(topCard.defId, topDef.category);
-          const autoTarget = targetEnemyId || useCombatStore.getState().enemies.find((e) => e.hp > 0)?.id;
-          for (const te of getCardEffects(topCard)) { resolveEffect(te, topCard, autoTarget); }
-          if (topDef.keywords?.includes('exhaust')) {
-            useCombatStore.setState((s) => ({ exhaustPile: [...s.exhaustPile, topCard] }));
-          } else { combat.addToDiscard(topCard); }
-          if (effect.onlyIfDamage) {
-            const dmgAfter = useCombatStore.getState().totalDamageDealtThisTurn;
-            if (dmgAfter <= dmgBefore) break;
-          }
-        }
-        break;
-      }
-
-      case 'playFromHand': {
-        const playableHand = useCombatStore.getState().hand.filter((c) => c.defId !== card.defId && c.defId !== 'hallucination');
-        const toPlay = [...playableHand].sort(() => Math.random() - 0.5).slice(0, effect.count);
-        for (const handCard of toPlay) {
-          if (!useCombatStore.getState().hand.find((c) => c.id === handCard.id)) continue;
-          const hDef = CARDS[handCard.defId];
-          if (!hDef) continue;
-          useCombatStore.setState((s) => ({ hand: s.hand.filter((c) => c.id !== handCard.id) }));
-          handCard.costOverride = 0;
-          combat.addLog(`Orchestrator plays ${hDef.name}!`);
-          combat.trackCardPlayed(handCard.defId, hDef.category);
-          const autoTarget = targetEnemyId || useCombatStore.getState().enemies.find((e) => e.hp > 0)?.id;
-          for (const he of getCardEffects(handCard)) { resolveEffect(he, handCard, autoTarget); }
-          if (hDef.keywords?.includes('exhaust')) {
-            useCombatStore.setState((s) => ({ exhaustPile: [...s.exhaustPile, handCard] }));
-          } else { combat.addToDiscard(handCard); }
-        }
-        break;
-      }
-
-      case 'scry':
-        combat.drawCards(1);
-        combat.addLog(`Scried top ${effect.amount} cards — drew 1.`);
-        break;
-
-      case 'copyEnemyIntent': {
-        const enemy = targetEnemyId ? state.enemies.find((e) => e.id === targetEnemyId) : state.enemies.find((e) => e.hp > 0);
-        if (!enemy) break;
-        const mirrorInst = createCardInstance('intentMirror');
-        mirrorInst.costOverride = 0;
-        combat.addToHand(mirrorInst);
-        combat.addLog(`Copied enemy intent as Intent Mirror!`);
-        break;
-      }
-
-      case 'permanentUpgradePrompt': {
-        const runState = useRunStore.getState();
-        const nonUpgraded = runState.deck.filter((c) => c.defId === 'prompt' && !c.upgraded);
-        if (nonUpgraded.length > 0) {
-          const pick = nonUpgraded[Math.floor(Math.random() * nonUpgraded.length)];
-          runState.upgradeCardInDeck(pick.id);
-          combat.addLog('Permanently upgraded a Prompt!');
-        } else { combat.addLog('No Prompts to upgrade.'); }
-        break;
-      }
-
-      case 'exhaustFromHand': {
-        const curHand = useCombatStore.getState().hand;
-        const exhaustable = curHand
-          .filter((c) => { const d = CARDS[c.defId]; return d && d.rarity !== 'curse' && c.id !== card.id; })
-          .sort((a, b) => getCardCost(a) - getCardCost(b));
-        if (exhaustable.length > 0) {
-          const toExhaust = exhaustable[0];
-          useCombatStore.setState((s) => ({
-            hand: s.hand.filter((c) => c.id !== toExhaust.id),
-            exhaustPile: [...s.exhaustPile, toExhaust],
-          }));
-          combat.addLog(`Exhausted ${CARDS[toExhaust.defId]?.name || 'a card'}.`);
-        }
-        break;
-      }
-
-      case 'heal':
-        run.heal(effect.amount);
-        combat.addLog(`Healed ${effect.amount} HP.`);
-        break;
-
-      case 'addTempCards':
-        for (let i = 0; i < effect.count; i++) {
-          const tempInst = createCardInstance(effect.cardId);
-          if (effect.costOverride !== undefined) tempInst.costOverride = effect.costOverride;
-          combat.addToHand(tempInst);
-        }
-        combat.addLog(`Added ${effect.count} ${CARDS[effect.cardId]?.name || 'cards'} to hand.`);
-        break;
-    }
-
-    if (consumeContext && contextBonus > 0) {
-      combat.removePlayerStatus('context', 999);
-    }
-  }, [combat, run]);
-
   const handleEndTurn = useCallback(async () => {
     if (combat.phase !== 'playerTurn') return;
 
     // Hallucination curse cards deal damage BEFORE discarding hand
-    const preDiscardHand = useCombatStore.getState().hand;
-    const halCards = preDiscardHand.filter((c) => c.defId === 'hallucination');
-    for (const halCard of halCards) {
-      const grounded = useCombatStore.getState().playerStatus.find((s) => s.status === 'grounded');
-      if (grounded && grounded.stacks > 0) {
-        combat.removePlayerStatus('grounded', 1);
-        combat.addLog('Grounded absorbed a Hallucination card!');
-      } else {
-        run.takeDamage(HALLUCINATION_SELF_DAMAGE);
-        showPlayerHit(HALLUCINATION_SELF_DAMAGE);
-        combat.addLog(`Hallucination card dealt ${HALLUCINATION_SELF_DAMAGE} damage!`);
-      }
-      // Exhaust the hallucination card after it triggers
-      useCombatStore.setState((s) => ({
-        hand: s.hand.filter((c) => c.id !== halCard.id),
-        exhaustPile: [...s.exhaustPile, halCard],
-      }));
-    }
+    processHallucinationCards(showPlayerHit);
 
     // NOW discard hand (keep retain cards)
     const retained: CardInstance[] = [];
@@ -725,6 +438,10 @@ export function CombatScreen() {
     for (const status of ['vulnerable', 'weak', 'confused', 'overfit'] as const) {
       combat.removePlayerStatus(status, 1);
     }
+    // Relic: rateLimiter — remove 1 Throttled stack at end of turn
+    if (useRunStore.getState().relics.includes('rateLimiter')) {
+      combat.removePlayerStatus('throttled', 1);
+    }
 
     if (useRunStore.getState().currentIntegrity <= 0) {
       combat.endCombat();
@@ -738,9 +455,10 @@ export function CombatScreen() {
     await new Promise((r) => setTimeout(r, 800));
 
     // Execute enemy intents
+    const enemyAnim: EnemyAnimations = { setMessage, setEnemyHit, showPlayerHit, showPlayerDebuffed, addFloat };
     for (const enemy of useCombatStore.getState().enemies.filter((e) => e.hp > 0)) {
       const intent = enemy.currentIntent;
-      executeEnemyIntent(enemy);
+      execEnemyIntent(enemy, enemyAnim, curseName, curseDesc);
       // Debuffs and attackDebuffs need more reading time
       const isDebuff = intent.type === 'debuff' || intent.type === 'attackDebuff';
       await new Promise((r) => setTimeout(r, isDebuff ? 2500 : 1200));
@@ -755,22 +473,18 @@ export function CombatScreen() {
       });
     }
 
-    // Tick enemy debuffs
-    for (const enemy of useCombatStore.getState().enemies) {
-      for (const status of ['vulnerable', 'weak'] as const) {
-        const s = enemy.statusEffects.find((e) => e.status === status);
-        if (s && s.stacks > 0) combat.addEnemyStatus(enemy.id, { status, stacks: -1 });
-      }
-      // Enemy hallucination
-      const eHal = enemy.statusEffects.find((s) => s.status === 'hallucination');
-      if (eHal) {
-        for (let i = 0; i < eHal.stacks; i++) {
-          if (Math.random() < HALLUCINATION_TRIGGER_CHANCE) {
-            combat.damageEnemy(enemy.id, HALLUCINATION_SELF_DAMAGE);
-          }
-        }
+    // Relic: webhook — if any enemy intends to buff, gain 5 Firewall
+    if (useRunStore.getState().relics.includes('webhook')) {
+      const nextEnemies = useCombatStore.getState().enemies.filter((e) => e.hp > 0);
+      if (nextEnemies.some((e) => e.currentIntent.type === 'buff')) {
+        useCombatStore.getState().gainFirewall(5);
+        showPlayerDefend(5);
+        combat.addLog('Webhook triggers! +5 Firewall (enemy buffing).');
       }
     }
+
+    // Tick enemy debuffs
+    tickEnemyDebuffs();
 
     // Check all enemies dead
     if (useCombatStore.getState().enemies.every((e) => e.hp <= 0)) {
@@ -787,104 +501,8 @@ export function CombatScreen() {
     // Next player turn
     setMessage(null);
     combat.startTurn();
+    applyRelicTurnStart();
   }, [combat, run]);
-
-  const executeEnemyIntent = useCallback((enemy: EnemyInstance) => {
-    const intent = enemy.currentIntent;
-    const def = ENEMIES[enemy.defId];
-    const name = def?.name || 'Enemy';
-
-    // Calculate total reduceDamage from active powers
-    const reduceAmount = useCombatStore.getState().activePowers
-      .filter((p) => p.type === 'reduceDamage')
-      .reduce((sum, p) => sum + (p.amount || 0), 0);
-
-    switch (intent.type) {
-      case 'attack':
-      case 'attackMulti': {
-        let dmg = intent.damage;
-        if (enemy.statusEffects.some((s) => s.status === 'weak')) dmg = Math.floor(dmg * 0.75);
-        if (reduceAmount > 0) dmg = Math.max(0, dmg - reduceAmount);
-        const hits = intent.type === 'attackMulti' ? (intent.times || 1) : 1;
-        setEnemyHit(enemy.id);
-        setTimeout(() => setEnemyHit(null), 300);
-        let totalDmg = 0;
-        for (let i = 0; i < hits; i++) {
-          const actual = combat.takeDamage(dmg);
-          run.takeDamage(actual);
-          totalDmg += actual;
-        }
-        showPlayerHit(totalDmg);
-        setMessage(`${name} attacks for ${dmg}${hits > 1 ? ` x${hits}` : ''}!`);
-        combat.addLog(`${name} attacks for ${dmg}${hits > 1 ? ` x${hits}` : ''}`);
-        break;
-      }
-      case 'attackDebuff': {
-        let dmg = intent.damage;
-        if (enemy.statusEffects.some((s) => s.status === 'weak')) dmg = Math.floor(dmg * 0.75);
-        if (reduceAmount > 0) dmg = Math.max(0, dmg - reduceAmount);
-        setEnemyHit(enemy.id);
-        setTimeout(() => setEnemyHit(null), 300);
-        const actual = combat.takeDamage(dmg);
-        run.takeDamage(actual);
-        showPlayerHit(actual);
-        setTimeout(() => showPlayerDebuffed(intent.status), 400);
-        if (intent.status === 'hallucination') {
-          for (let i = 0; i < intent.stacks; i++) {
-            combat.shuffleIntoDraw(createCardInstance('hallucination'));
-          }
-          setMessage(`${name} attacks for ${dmg} + shuffles ${intent.stacks} ${curseName} card${intent.stacks > 1 ? 's' : ''} into your deck!`);
-        } else {
-          combat.addPlayerStatus({ status: intent.status, stacks: intent.stacks });
-          setMessage(`${name} attacks for ${dmg} + ${getDebuffDescription(intent.status, intent.stacks)}`);
-        }
-        combat.addLog(`${name} attacks for ${dmg} + ${intent.status}`);
-        break;
-      }
-      case 'defend':
-        combat.updateEnemy(enemy.id, { firewall: enemy.firewall + intent.firewall });
-        addFloat(enemy.id, `+${intent.firewall} FW`, '#60a5fa');
-        setMessage(`${name} gains ${intent.firewall} Firewall`);
-        combat.addLog(`${name} gains ${intent.firewall} Firewall`);
-        break;
-      case 'buff':
-        if (enemy.defId === 'ghostEndpoint') {
-          combat.addEnemyStatus(enemy.id, { status: 'intangible', stacks: 1 });
-        }
-        addFloat(enemy.id, 'BUFF', '#fbbf24');
-        setMessage(`${name} buffs itself!`);
-        combat.addLog(`${name} buffs itself`);
-        break;
-      case 'debuff':
-        if (intent.status === 'hallucination') {
-          // Shuffle curse cards into draw pile
-          for (let i = 0; i < intent.stacks; i++) {
-            combat.shuffleIntoDraw(createCardInstance('hallucination'));
-          }
-          showPlayerDebuffed(curseName);
-          setMessage(`${name} shuffles ${intent.stacks} ${curseName} card${intent.stacks > 1 ? 's' : ''} into your deck! (${curseDesc})`);
-          combat.addLog(`${name} adds ${intent.stacks} ${curseName} cards`);
-        } else {
-          combat.addPlayerStatus({ status: intent.status, stacks: intent.stacks });
-          showPlayerDebuffed(intent.status);
-          setMessage(`${name} applies ${getDebuffDescription(intent.status, intent.stacks)}`);
-          combat.addLog(`${name} applies ${intent.status}`);
-        }
-        break;
-    }
-  }, [combat, run]);
-
-  function getDebuffDescription(status: string, stacks: number): string {
-    switch (status) {
-      case 'hallucination': return `Hallucination x${stacks}! (Shuffles ${stacks} curse card${stacks > 1 ? 's' : ''} into your deck — deals 3 damage when in hand)`;
-      case 'confused': return `Confused x${stacks}! (Each stack randomizes 1 card's energy cost at start of turn)`;
-      case 'vulnerable': return `Vulnerable x${stacks}! (Take 50% more damage)`;
-      case 'weak': return `Weak x${stacks}! (Deal 25% less damage)`;
-      case 'throttled': return `Throttled x${stacks}! (Reduced energy)`;
-      case 'overfit': return `Overfit x${stacks}! (Playing the same card twice halves its damage)`;
-      default: return `${status} x${stacks}`;
-    }
-  }
 
   if (!combat.active) return null;
 
@@ -927,8 +545,17 @@ export function CombatScreen() {
         boxShadow: 'inset 0 -2px 0 #3d2d5c',
         letterSpacing: 1,
       }}>
-        <span style={{ color: '#c4b89a' }}>Act {run.act} | Turn {combat.turn}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ color: '#c4b89a' }}>Act {run.act} | Turn {combat.turn}</span>
+          <RelicBar relicIds={run.relics} />
+        </div>
         <span style={{ color: '#8a7a66', fontSize: 11 }}>{combat.log[combat.log.length - 1] || ''}</span>
+        <span
+          onClick={() => setShowDeck(true)}
+          style={{ color: '#8a7a66', fontSize: 9, cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#3d2d5c', letterSpacing: 1 }}
+        >
+          DECK
+        </span>
       </div>
 
       {/* Battle area: player left, enemies right */}
@@ -969,6 +596,7 @@ export function CombatScreen() {
               transition: 'filter 0.15s',
             }}
           />
+          <ByteSpeechBubble />
           {/* Floating text on player */}
           {floats.filter((f) => f.target === 'player').map((f) => (
             <div key={f.id} style={{
@@ -1047,6 +675,17 @@ export function CombatScreen() {
         activePowers={combat.activePowers}
       />
 
+      {/* Potion slots */}
+      <div style={{ position: 'absolute', right: 20, top: 56, zIndex: 10 }}>
+        <PotionSlots
+          potions={run.potions}
+          maxSlots={run.maxPotionSlots}
+          canUse={combat.phase === 'playerTurn'}
+          onUse={handleUsePotion}
+          onDiscard={(id) => run.removePotion(id)}
+        />
+      </div>
+
       {/* Hand + controls area */}
       <div style={{
         borderTop: '2px solid #2d2d5e',
@@ -1121,6 +760,16 @@ export function CombatScreen() {
             run.addGold(combat.goldReward);
             const runState = useRunStore.getState();
             const currentNode = runState.map.flat().find((n) => n.id === runState.currentNodeId);
+            // Potion drop
+            const dropRate = currentNode?.type === 'boss' ? POTION_DROP_RATE_BOSS
+              : currentNode?.type === 'elite' ? POTION_DROP_RATE_ELITE
+              : POTION_DROP_RATE_NORMAL;
+            if (Math.random() < dropRate) {
+              const potionDef = generatePotionDrop();
+              if (potionDef) {
+                runState.addPotion({ id: uid(), defId: potionDef.id });
+              }
+            }
             combat.endCombat();
             if (currentNode?.type === 'boss' && runState.act < 3) {
               runState.advanceAct();
@@ -1133,6 +782,10 @@ export function CombatScreen() {
           onPickCard={(defId) => {
             const inst = createCardInstance(defId);
             run.addCardToDeck(inst);
+          }}
+          relicReward={combat.relicReward}
+          onPickRelic={(relicId) => {
+            run.addRelic(relicId);
           }}
         />
       )}
@@ -1191,6 +844,22 @@ export function CombatScreen() {
             CLICK TO DISMISS
           </div>
         </div>
+      )}
+
+      {showDeck && (
+        <DeckViewerOverlay
+          cards={run.deck}
+          title="Your Deck"
+          onClose={() => setShowDeck(false)}
+        />
+      )}
+
+      {/* Skill check overlay */}
+      {pendingSkillCheck && (
+        <SkillCheckOverlay
+          checkType={pendingSkillCheck.checkType}
+          onResult={handleSkillCheckResult}
+        />
       )}
 
       <style>{`

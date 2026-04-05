@@ -12,6 +12,18 @@ import { S3_Hallucination } from '../scenario/S3_Hallucination';
 import { S4_Grounding } from '../scenario/S4_Grounding';
 import { S5_PromptEngineering } from '../scenario/S5_PromptEngineering';
 import { S6_ContextWindow } from '../scenario/S6_ContextWindow';
+import { S7_RAG } from '../scenario/S7_RAG';
+import { S8_API } from '../scenario/S8_API';
+import { S9_ToolUse } from '../scenario/S9_ToolUse';
+import { S10_AIAgents } from '../scenario/S10_AIAgents';
+import { S11_FewShot } from '../scenario/S11_FewShot';
+import { S12_MCP } from '../scenario/S12_MCP';
+import { S13_Multimodal } from '../scenario/S13_Multimodal';
+import { S14_Ethics } from '../scenario/S14_Ethics';
+import { S15_Automation } from '../scenario/S15_Automation';
+import { S16_FineTuning } from '../scenario/S16_FineTuning';
+import { S17_Safety } from '../scenario/S17_Safety';
+import { S18_Orchestration } from '../scenario/S18_Orchestration';
 
 type ScenarioPhase = 'playing' | 'popup' | 'done';
 
@@ -192,7 +204,20 @@ function ScenarioContent({ scenarioId, onComplete }: { scenarioId: string; onCom
     case 's4_grounding': return <S4_Grounding onComplete={onComplete} />;
     case 's5_promptEng': return <S5_PromptEngineering onComplete={onComplete} />;
     case 's6_contextWindow': return <S6_ContextWindow onComplete={onComplete} />;
-    // Act 2 & 3 scenarios will be added here
+    // Act 2
+    case 's7_rag': return <S7_RAG onComplete={onComplete} />;
+    case 's8_api': return <S8_API onComplete={onComplete} />;
+    case 's9_toolUse': return <S9_ToolUse onComplete={onComplete} />;
+    case 's10_agent': return <S10_AIAgents onComplete={onComplete} />;
+    case 's11_fewShot': return <S11_FewShot onComplete={onComplete} />;
+    case 's12_mcp': return <S12_MCP onComplete={onComplete} />;
+    // Act 3
+    case 's13_multimodal': return <S13_Multimodal onComplete={onComplete} />;
+    case 's14_ethics': return <S14_Ethics onComplete={onComplete} />;
+    case 's15_automation': return <S15_Automation onComplete={onComplete} />;
+    case 's16_fineTuning': return <S16_FineTuning onComplete={onComplete} />;
+    case 's17_safety': return <S17_Safety onComplete={onComplete} />;
+    case 's18_orchestration': return <S18_Orchestration onComplete={onComplete} />;
     default:
       return (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

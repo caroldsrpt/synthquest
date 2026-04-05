@@ -10,7 +10,7 @@ export const HALLUCINATION_TRIGGER_CHANCE = 0.3;
 export const HALLUCINATION_SELF_DAMAGE = 3;
 
 // Gold economy
-export const STARTING_GOLD = 99;
+export const STARTING_GOLD = 50;
 export const COMBAT_GOLD_MIN = 10;
 export const COMBAT_GOLD_MAX = 20;
 export const ELITE_GOLD_MIN = 25;
@@ -76,3 +76,12 @@ export const COLORS = {
     curse: '#ef4444',
   } as Record<string, string>,
 } as const;
+
+// Potion System
+export const MAX_POTION_SLOTS = 2;
+export const POTION_DROP_RATE_NORMAL = 0.40;
+export const POTION_DROP_RATE_ELITE = 0.65;
+export const POTION_DROP_RATE_BOSS = 1.0;
+export const SHOP_POTION_COMMON = 35;
+export const SHOP_POTION_UNCOMMON = 55;
+export const SHOP_POTION_RARE = 90;

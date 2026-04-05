@@ -251,6 +251,25 @@ export interface MetaState {
   cardsSeenIds: string[];
 }
 
+// === Potion Types ===
+
+export type PotionRarity = 'common' | 'uncommon' | 'rare';
+export type PotionTarget = 'self' | 'singleEnemy' | 'allEnemies';
+
+export interface PotionDef {
+  id: string;
+  name: string;
+  rarity: PotionRarity;
+  target: PotionTarget;
+  description: string;
+  aiTooltip: string;
+}
+
+export interface PotionInstance {
+  id: string;
+  defId: string;
+}
+
 // === Screen State ===
 
 export type GameScreen =

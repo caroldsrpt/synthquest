@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRunStore } from '../../stores/runStore';
 import { useCombatStore } from '../../stores/combatStore';
+import { DeckViewerOverlay } from '../shared/DeckViewerOverlay';
+import { RelicBar } from '../shared/RelicBar';
 import { generateMap } from '../../game/systems/MapGenerator';
 import { createEnemy, ACT_ENCOUNTERS, ELITE_ENCOUNTERS, BOSS_ENCOUNTERS } from '../../game/data/enemies';
 import { weightedPick, randInt } from '../../utils/random';
 import { COMBAT_GOLD_MIN, COMBAT_GOLD_MAX, ELITE_GOLD_MIN, ELITE_GOLD_MAX, BOSS_GOLD_MIN, BOSS_GOLD_MAX } from '../../utils/constants';
 import { generateCardRewards } from '../../utils/cardUtils';
+import { getRelicsByRarity } from '../../game/data/relics';
 import { SCENARIOS } from '../../game/data/scenarios';
 import { getEventsForAct } from '../../game/data/events';
 import type { MapNode } from '../../game/data/types';
@@ -52,6 +55,7 @@ function getNodeLabel(node: MapNode): string {
 
 export function MapScreen() {
   const run = useRunStore();
+  const [showDeck, setShowDeck] = useState(false);
 
   useEffect(() => {
     if (run.map.length === 0) {
@@ -90,7 +94,19 @@ export function MapScreen() {
         : node.type === 'elite' ? randInt(ELITE_GOLD_MIN, ELITE_GOLD_MAX)
         : randInt(COMBAT_GOLD_MIN, COMBAT_GOLD_MAX);
       useCombatStore.getState().initCombat([...run.deck], enemies, run.getMaxEnergy());
-      useCombatStore.getState().setRewards(gold, generateCardRewards(run.act, node.type === 'boss' ? 'boss' : node.type === 'elite' ? 'elite' : 'normal'), null);
+      // Generate relic reward for elite/boss fights
+      let relicReward = null;
+      if (node.type === 'elite' || node.type === 'boss') {
+        const owned = run.relics;
+        const pool = node.type === 'boss'
+          ? getRelicsByRarity('boss').concat(getRelicsByRarity('rare'))
+          : getRelicsByRarity('uncommon').concat(getRelicsByRarity('common'));
+        const available = pool.filter((r) => !owned.includes(r.id));
+        if (available.length > 0) {
+          relicReward = available[Math.floor(Math.random() * available.length)];
+        }
+      }
+      useCombatStore.getState().setRewards(gold, generateCardRewards(run.act, node.type === 'boss' ? 'boss' : node.type === 'elite' ? 'elite' : 'normal'), relicReward);
       run.setScreen('combat');
     } else if (node.type === 'scenario' && node.scenarioId) {
       run.setCurrentScenario(node.scenarioId);
@@ -166,15 +182,18 @@ export function MapScreen() {
         borderBottom: '3px solid #6b4fa0',
         boxShadow: 'inset 0 -2px 0 #3d2d5c, 0 4px 12px rgba(0,0,0,0.5)',
       }}>
-        <span style={{
-          fontFamily: PIXEL,
-          fontSize: 12,
-          color: '#c4b89a',
-          textShadow: PX_OUTLINE,
-          letterSpacing: 1,
-        }}>
-          Act {run.act}: {ACT_NAMES[run.act]}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{
+            fontFamily: PIXEL,
+            fontSize: 12,
+            color: '#c4b89a',
+            textShadow: PX_OUTLINE,
+            letterSpacing: 1,
+          }}>
+            Act {run.act}: {ACT_NAMES[run.act]}
+          </span>
+          <RelicBar relicIds={run.relics} />
+        </div>
         <div style={{ display: 'flex', gap: 20, fontFamily: PIXEL, fontSize: 9 }}>
           <span style={{ color: '#fbbf24', textShadow: PX_OUTLINE }}>
             {run.gold}g
@@ -185,7 +204,10 @@ export function MapScreen() {
           }}>
             ♥ {run.currentIntegrity}/{run.maxIntegrity}
           </span>
-          <span style={{ color: '#8a7a66', textShadow: PX_OUTLINE }}>
+          <span
+            onClick={() => setShowDeck(true)}
+            style={{ color: '#8a7a66', textShadow: PX_OUTLINE, cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#3d2d5c' }}
+          >
             {run.deck.length} cards
           </span>
         </div>
@@ -323,6 +345,14 @@ export function MapScreen() {
           50% { transform: scale(1.08); }
         }
       `}</style>
+
+      {showDeck && (
+        <DeckViewerOverlay
+          cards={run.deck}
+          title="Your Deck"
+          onClose={() => setShowDeck(false)}
+        />
+      )}
     </div>
   );
 }

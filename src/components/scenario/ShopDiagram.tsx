@@ -32,7 +32,7 @@ export function ShopDiagram({ compact }: { compact?: boolean }) {
 
   // Always show AI Box after S1
   if (has('s1_textGeneration')) {
-    boxes.push({ id: 'ai', label: has('s13_agent') ? 'AI Agent' : 'AI Assistant', x: 300, y: height / 2, w: 100, h: 36, color: '#7b68ee', icon: has('s2_temperature') ? '\u{1F321}' : undefined, badge: has('s3_hallucination') && !has('s4_grounding') ? '\u26A0\uFE0F' : has('s4_grounding') ? '\u2705' : undefined });
+    boxes.push({ id: 'ai', label: has('s10_agent') ? 'AI Agent' : 'AI Assistant', x: 300, y: height / 2, w: 100, h: 36, color: '#7b68ee', icon: has('s2_temperature') ? '\u{1F321}' : undefined, badge: has('s3_hallucination') && !has('s4_grounding') ? '\u26A0\uFE0F' : has('s4_grounding') ? '\u2705' : undefined });
   }
 
   // Database after S4
@@ -68,7 +68,7 @@ export function ShopDiagram({ compact }: { compact?: boolean }) {
   }
 
   // Orchestrator after S16
-  if (has('s16_orchestration')) {
+  if (has('s18_orchestration')) {
     boxes.push({ id: 'orch', label: 'Orchestrator', x: 120, y: 10, w: 90, h: 28, color: '#ef4444' });
     wires.push({ from: 'orch', to: 'ai' });
   }

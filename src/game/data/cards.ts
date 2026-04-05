@@ -354,10 +354,12 @@ export function getCardPool(act: 1 | 2 | 3): CardDef[] {
 
 // Helper: get starter deck card IDs
 export function getStarterDeckIds(): string[] {
+  // 7-card starter deck — simpler for beginners.
+  // 3 attack + 2 defense + 1 combo enabler + 1 combo payoff
   return [
-    'prompt', 'prompt', 'prompt', 'prompt',
-    'errorHandle', 'errorHandle', 'errorHandle', 'errorHandle',
-    'brainstorm',
-    'autocomplete',
+    'prompt', 'prompt', 'prompt',        // 3 attacks (deal 6 damage)
+    'errorHandle', 'errorHandle',         // 2 blocks (gain 5 firewall)
+    'autocomplete',                       // draw 1 + deal 3 (utility)
+    'brainstorm',                         // AoE damage (introduces multi-target)
   ];
 }

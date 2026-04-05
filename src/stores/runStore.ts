@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import type { RunState, GameScreen, CardInstance, MapNode } from '../game/data/types';
+import type { RunState, GameScreen, CardInstance, MapNode, PotionInstance } from '../game/data/types';
 import { generateMap } from '../game/systems/MapGenerator';
-import { BASE_INTEGRITY, STARTING_GOLD, BASE_ENERGY, HAND_SIZE } from '../utils/constants';
+import { BASE_INTEGRITY, STARTING_GOLD, BASE_ENERGY, HAND_SIZE, MAX_POTION_SLOTS } from '../utils/constants';
 import { createStarterDeck } from '../utils/cardUtils';
 import { useCombatStore } from './combatStore';
 
@@ -55,6 +55,12 @@ interface RunStore extends RunState {
   currentEventId: string | null;
   setCurrentEvent: (id: string | null) => void;
 
+  // Potions
+  potions: PotionInstance[];
+  maxPotionSlots: number;
+  addPotion: (potion: PotionInstance) => boolean; // false if full
+  removePotion: (potionId: string) => void;
+
   // Getters
   getMaxEnergy: () => number;
   getDrawCount: () => number;
@@ -80,12 +86,16 @@ const INITIAL_RUN: RunState = {
 
 export const useRunStore = create<RunStore>((set, get) => ({
   ...INITIAL_RUN,
+  potions: [] as PotionInstance[],
+  maxPotionSlots: MAX_POTION_SLOTS,
   screen: 'title',
 
   startNewRun: () => {
     set({
       ...INITIAL_RUN,
       active: true,
+      potions: [],
+      maxPotionSlots: MAX_POTION_SLOTS,
       deck: createStarterDeck(),
       map: generateMap(1),
       screen: 'map',
@@ -166,6 +176,16 @@ export const useRunStore = create<RunStore>((set, get) => ({
   addRelic: (relicId) => set((s) => ({ relics: [...s.relics, relicId] })),
 
   hasRelic: (relicId) => get().relics.includes(relicId),
+
+  addPotion: (potion) => {
+    const state = get();
+    if (state.potions.length >= state.maxPotionSlots) return false;
+    set({ potions: [...state.potions, potion] });
+    return true;
+  },
+  removePotion: (potionId) => set((s) => ({
+    potions: s.potions.filter((p) => p.id !== potionId),
+  })),
 
   setMap: (map) => set({ map }),
 
