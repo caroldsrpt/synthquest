@@ -538,18 +538,18 @@ export function CombatScreen() {
       {/* Header */}
       <div style={{
         position: 'relative', zIndex: 2,
-        padding: '12px 20px', fontSize: 12,
+        padding: '6px 16px', fontSize: 9,
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         background: 'rgba(12, 8, 24, 0.9)',
-        borderBottom: '3px solid #6b4fa0',
-        boxShadow: 'inset 0 -2px 0 #3d2d5c',
+        borderBottom: '2px solid #6b4fa0',
+        boxShadow: 'inset 0 -1px 0 #3d2d5c',
         letterSpacing: 1,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ color: '#c4b89a' }}>Act {run.act} | Turn {combat.turn}</span>
           <RelicBar relicIds={run.relics} />
         </div>
-        <span style={{ color: '#8a7a66', fontSize: 11 }}>{combat.log[combat.log.length - 1] || ''}</span>
+        <span style={{ color: '#8a7a66', fontSize: 8 }}>{combat.log[combat.log.length - 1] || ''}</span>
         <button
           onClick={() => setShowDeck(true)}
           title="View your deck"
@@ -703,8 +703,8 @@ export function CombatScreen() {
       <div style={{
         borderTop: '2px solid #2d2d5e',
         background: 'rgba(15, 15, 35, 0.9)',
-        padding: '10px 0 8px',
-        minHeight: showHand ? 230 : 80,
+        padding: '4px 0 4px',
+        minHeight: showHand ? 175 : 50,
       }}>
         {showHand && (
           <HandDisplay
@@ -735,13 +735,13 @@ export function CombatScreen() {
         <button
           onClick={handleEndTurn}
           style={{
-            position: 'absolute', right: 20, bottom: 240,
-            padding: '12px 24px',
+            position: 'absolute', right: 12, bottom: 185,
+            padding: '8px 16px',
             background: 'rgba(12, 8, 24, 0.85)',
-            border: '3px solid #6b4fa0',
-            boxShadow: 'inset 0 0 0 2px #1a1130, inset 0 0 0 4px #3d2d5c, 0 0 12px rgba(107,79,160,0.3)',
+            border: '2px solid #6b4fa0',
+            boxShadow: 'inset 0 0 0 1px #1a1130, inset 0 0 0 2px #3d2d5c, 0 0 8px rgba(107,79,160,0.3)',
             color: '#c4b89a', fontFamily: "'Press Start 2P', monospace",
-            fontSize: 10, cursor: 'pointer', letterSpacing: 2,
+            fontSize: 8, cursor: 'pointer', letterSpacing: 2,
             zIndex: 10,
           }}
         >
@@ -804,21 +804,22 @@ export function CombatScreen() {
         />
       )}
 
-      {/* First-draw card tip tooltip — positioned at top-left to avoid blocking combat */}
+      {/* First-draw card tip tooltip */}
       {activeTip && (
         <div
           onClick={dismissTip}
           style={{
             position: 'absolute',
-            top: 56,
-            left: 16,
+            bottom: showHand ? 250 : 100,
+            left: '50%',
+            transform: 'translateX(-50%)',
             zIndex: 40,
             background: 'rgba(12, 8, 24, 0.95)',
             border: '3px solid #6b4fa0',
             boxShadow:
               'inset 0 0 0 2px #1a1130, inset 0 0 0 4px #3d2d5c, 0 0 30px rgba(107,79,160,0.5)',
             padding: '16px 24px 12px',
-            maxWidth: 360,
+            maxWidth: 480,
             textAlign: 'center',
             cursor: 'pointer',
             animation: 'tipFadeIn 0.3s ease-out',

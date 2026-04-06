@@ -50,7 +50,7 @@ export function RewardOverlay({
     padding: '40px 60px',
     textAlign: 'center',
     fontFamily: "'Press Start 2P', monospace",
-    maxWidth: '90vw',
+    maxWidth: 864,
   };
 
   const btnStyle: React.CSSProperties = {

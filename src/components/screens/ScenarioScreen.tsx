@@ -4,7 +4,7 @@ import { useMetaStore } from '../../stores/metaStore';
 import { SCENARIOS } from '../../game/data/scenarios';
 import { CARDS } from '../../game/data/cards';
 import { createCardInstance } from '../../utils/cardUtils';
-import { ShopDiagram } from '../scenario/ShopDiagram';
+
 import { CardComponent } from '../combat/CardComponent';
 import { S1_TextGeneration } from '../scenario/S1_TextGeneration';
 import { S2_Temperature } from '../scenario/S2_Temperature';
@@ -58,53 +58,42 @@ export function ScenarioScreen() {
       background: '#0c0c1a', fontFamily: 'monospace', color: '#e0e0e0',
       display: 'flex', flexDirection: 'column', position: 'relative',
     }}>
-      {/* Shop diagram - top */}
-      <ShopDiagram />
-
-      {/* Scenario title bar */}
+      {/* Compact title bar */}
       <div style={{
-        padding: '8px 20px',
+        padding: '6px 16px',
         borderBottom: '1px solid #1e2030',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        background: 'rgba(8,8,18,0.9)',
+        flexShrink: 0,
       }}>
         <div>
-          <span style={{ color: '#7b68ee', fontWeight: 'bold', fontSize: 14 }}>
+          <span style={{ color: '#7b68ee', fontWeight: 'bold', fontSize: 11 }}>
             S{scenario.number}: {scenario.title}
           </span>
-          <span style={{ color: '#374151', fontSize: 12, marginLeft: 12 }}>
+          <span style={{ color: '#374151', fontSize: 9, marginLeft: 10 }}>
             {scenario.concept}
           </span>
         </div>
-        <button
-          onClick={handleComplete}
-          style={{
-            fontSize: 10, padding: '4px 10px', background: 'none',
-            border: '1px solid #374151', borderRadius: 4, color: '#4b5563',
-            fontFamily: 'monospace', cursor: 'pointer',
-          }}
-        >
-          Skip
-        </button>
+        {phase === 'playing' && (
+          <button
+            onClick={handleComplete}
+            style={{
+              fontSize: 8, padding: '3px 8px', background: 'none',
+              border: '1px solid #374151', borderRadius: 3, color: '#4b5563',
+              fontFamily: 'monospace', cursor: 'pointer',
+            }}
+          >
+            Skip
+          </button>
+        )}
       </div>
 
-      {/* Scenario content - center */}
+      {/* Scenario content */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {phase === 'playing' && (
           <ScenarioContent scenarioId={scenario.id} onComplete={handleComplete} />
         )}
       </div>
-
-      {/* Instruction bar - bottom */}
-      {phase === 'playing' && (
-        <div style={{
-          padding: '10px 20px',
-          borderTop: '1px solid #1e2030',
-          background: '#080812',
-          fontSize: 12, color: '#6b7280', textAlign: 'center',
-        }}>
-          {scenario.instruction}
-        </div>
-      )}
 
       {/* Popup overlay */}
       {phase === 'popup' && (() => {

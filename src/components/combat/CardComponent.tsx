@@ -54,8 +54,8 @@ export function CardComponent({ card, index, selected, playable, onClick, small 
   const desc = getCardDescription(card);
   const catColor = COLORS.categories[def.category] || '#888';
   const rarityColor = COLORS.rarity[def.rarity] || '#fff';
-  const w = small ? 130 : 160;
-  const h = small ? 185 : 230;
+  const w = small ? 100 : 120;
+  const h = small ? 140 : 170;
   const artSrc = CATEGORY_ART[def.category];
 
   return (
@@ -88,16 +88,16 @@ export function CardComponent({ card, index, selected, playable, onClick, small 
       {/* Cost orb */}
       <div style={{
         position: 'absolute',
-        top: 4,
-        left: 4,
-        width: 26,
-        height: 26,
+        top: 3,
+        left: 3,
+        width: 20,
+        height: 20,
         background: COLORS.energy,
         color: '#0f0f23',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: 13,
+        fontSize: 10,
         fontWeight: 'bold',
         fontFamily: "'Press Start 2P', monospace",
         border: '2px solid #000',
@@ -108,7 +108,7 @@ export function CardComponent({ card, index, selected, playable, onClick, small 
 
       {/* Card art area */}
       <div style={{
-        height: small ? 55 : 70,
+        height: small ? 36 : 46,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -122,8 +122,8 @@ export function CardComponent({ card, index, selected, playable, onClick, small 
             src={artSrc}
             alt={def.category}
             style={{
-              width: small ? 48 : 56,
-              height: small ? 48 : 56,
+              width: small ? 32 : 40,
+              height: small ? 32 : 40,
               imageRendering: 'pixelated',
               mixBlendMode: 'screen',
               opacity: 0.9,
@@ -134,8 +134,8 @@ export function CardComponent({ card, index, selected, playable, onClick, small 
 
       {/* Type tag */}
       <div style={{
-        padding: '4px 0',
-        fontSize: 8,
+        padding: '2px 0',
+        fontSize: 6,
         fontFamily: "'Press Start 2P', monospace",
         textAlign: 'center',
         color: def.category === 'curse' ? '#ef4444' : def.keywords?.includes('power') ? '#4ade80' : def.target === 'self' ? '#60a5fa' : def.target === 'allEnemies' ? '#f472b6' : def.target === 'none' ? '#fbbf24' : '#ef4444',
@@ -148,15 +148,15 @@ export function CardComponent({ card, index, selected, playable, onClick, small 
 
       {/* Name */}
       <div style={{
-        padding: '2px 8px 3px',
-        fontSize: small ? 10 : 11,
+        padding: '1px 6px 2px',
+        fontSize: small ? 7 : 8,
         fontFamily: "'Press Start 2P', monospace",
         fontWeight: 'bold',
         textAlign: 'center',
         color: card.upgraded ? COLORS.rarity.rare : '#e0e0e0',
         textShadow: PX_OUTLINE_SM,
         wordBreak: 'break-word',
-        lineHeight: 1.3,
+        lineHeight: 1.2,
         letterSpacing: 0.5,
       }}>
         {name}
@@ -165,11 +165,11 @@ export function CardComponent({ card, index, selected, playable, onClick, small 
       {/* Description */}
       <div style={{
         flex: 1,
-        padding: '4px 10px 8px',
-        fontSize: small ? 10 : 12,
+        padding: '2px 6px 4px',
+        fontSize: small ? 8 : 9,
         fontFamily: 'monospace',
         color: '#9ca3af',
-        lineHeight: 1.4,
+        lineHeight: 1.3,
         textAlign: 'center',
         overflow: 'hidden',
       }}>

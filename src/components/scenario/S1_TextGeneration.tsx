@@ -56,29 +56,29 @@ export function S1_TextGeneration({ onComplete }: { onComplete: () => void }) {
   };
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '16px 24px', overflow: 'auto', maxWidth: 640, margin: '0 auto', width: '100%' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '8px 24px', overflow: 'hidden', maxWidth: 640, margin: '0 auto', width: '100%' }}>
 
       {/* PHASE: Intro */}
       {phase === 'intro' && (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, textAlign: 'center', marginTop: 20 }}>
-          <div style={{ fontSize: 32, marginBottom: 4 }}>{'\uD83E\uDDC1'}</div>
-          <h2 style={{ fontSize: 20, fontWeight: 'bold', margin: 0, color: '#e0e0e0' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, textAlign: 'center', marginTop: 8 }}>
+          <div style={{ fontSize: 24 }}>{'\uD83E\uDDC1'}</div>
+          <h2 style={{ fontSize: 18, fontWeight: 'bold', margin: 0, color: '#e0e0e0' }}>
             Welcome to Byte's Bakery!
           </h2>
-          <p style={{ fontSize: 14, color: '#9ca3af', lineHeight: 1.7, maxWidth: 450 }}>
+          <p style={{ fontSize: 12, color: '#9ca3af', lineHeight: 1.6, maxWidth: 420 }}>
             The bakery needs an AI assistant to help answer customer questions —
             something like <strong style={{ color: '#a78bfa' }}>ChatGPT</strong>,{' '}
             <strong style={{ color: '#a78bfa' }}>Claude</strong>, or{' '}
             <strong style={{ color: '#a78bfa' }}>Gemini</strong>.
             But before we build one, let's understand how they actually work.
           </p>
-          <p style={{ fontSize: 13, color: '#7b68ee', lineHeight: 1.7, maxWidth: 450 }}>
+          <p style={{ fontSize: 11, color: '#7b68ee', lineHeight: 1.6, maxWidth: 420 }}>
             These are all <strong>Large Language Models (LLMs)</strong>.
             Here's the key thing: they don't "know" anything. They predict
             the most likely next word, one word at a time — like autocomplete on your phone,
             but trained on billions of pages of text.
           </p>
-          <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.7, maxWidth: 450 }}>
+          <p style={{ fontSize: 11, color: '#6b7280', lineHeight: 1.6, maxWidth: 420 }}>
             Let's see it in action. A customer is about to ask a question.
           </p>
           <button onClick={() => { setPhase('generate'); setWordIndex(0); }} style={btnStyle}>
@@ -92,20 +92,20 @@ export function S1_TextGeneration({ onComplete }: { onComplete: () => void }) {
         <>
           {/* Customer question */}
           <div style={bubbleStyle}>
-            <span style={{ fontSize: 11, color: '#6b7280', display: 'block', marginBottom: 4 }}>{'\uD83D\uDC64'} Customer:</span>
+            <span style={{ fontSize: 10, color: '#6b7280', display: 'block', marginBottom: 2 }}>{'\uD83D\uDC64'} Customer:</span>
             "What do you have today?"
           </div>
 
           {/* AI response building word by word */}
           <div style={{
             background: '#0f0f23', border: '2px solid #7b68ee44', borderRadius: 12,
-            padding: 16, width: '100%',
+            padding: 12, width: '100%',
           }}>
-            <div style={{ fontSize: 11, color: '#7b68ee', marginBottom: 8 }}>
+            <div style={{ fontSize: 10, color: '#7b68ee', marginBottom: 6 }}>
               {'\uD83E\uDD16'} AI is generating a response word by word:
             </div>
 
-            <div style={{ fontSize: 16, lineHeight: 2, minHeight: 30 }}>
+            <div style={{ fontSize: 14, lineHeight: 1.8, minHeight: 24 }}>
               {WORDS.slice(0, Math.max(0, wordIndex)).map((word, i) => (
                 <span key={i} style={{
                   color: '#e0e0e0',
@@ -126,27 +126,27 @@ export function S1_TextGeneration({ onComplete }: { onComplete: () => void }) {
           {phase === 'generate' && wordIndex >= 0 && wordIndex < PROBS.length && (
             <div style={{
               background: '#1a1a2e', border: '2px solid #fbbf2444', borderRadius: 12,
-              padding: 16, width: '100%',
+              padding: 10, width: '100%',
             }}>
-              <div style={{ fontSize: 12, color: '#fbbf24', marginBottom: 8, fontWeight: 'bold' }}>
+              <div style={{ fontSize: 10, color: '#fbbf24', marginBottom: 4, fontWeight: 'bold' }}>
                 {showingProbs ? '\u{1F914} Which word should come next?' : '\u{1F914} Predicting next word...'}
               </div>
-              <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 10 }}>
+              <div style={{ fontSize: 10, color: '#6b7280', marginBottom: 6 }}>
                 The AI calculates probabilities for every possible next word, then picks one:
               </div>
               {PROBS[wordIndex].map((p, i) => (
                 <div key={i} style={{
-                  display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6,
+                  display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4,
                 }}>
                   <div style={{
-                    flex: 1, height: 28, background: '#0f0f23', borderRadius: 6,
+                    flex: 1, height: 22, background: '#0f0f23', borderRadius: 4,
                     overflow: 'hidden', position: 'relative',
                   }}>
                     <div style={{
-                      width: `${p.pct}%`, height: '100%', borderRadius: 6,
+                      width: `${p.pct}%`, height: '100%', borderRadius: 4,
                       background: i === 0 ? '#7b68ee' : i === 1 ? '#4b556366' : '#2d2d5e44',
                       display: 'flex', alignItems: 'center', paddingLeft: 10,
-                      fontSize: 13, color: '#fff', fontWeight: i === 0 ? 'bold' : 'normal',
+                      fontSize: 11, color: '#fff', fontWeight: i === 0 ? 'bold' : 'normal',
                       transition: 'width 0.3s ease',
                     }}>
                       "{p.word}"
@@ -175,18 +175,22 @@ export function S1_TextGeneration({ onComplete }: { onComplete: () => void }) {
       {phase === 'explain' && (
         <div style={{
           background: '#1a1a2e', border: '1px solid #2d2d5e', borderRadius: 12,
-          padding: 16, width: '100%', textAlign: 'center',
+          padding: 12, width: '100%', textAlign: 'center',
         }}>
-          <div style={{ fontSize: 14, color: '#e0e0e0', lineHeight: 1.7, marginBottom: 12 }}>
+          <div style={{ fontSize: 12, color: '#e0e0e0', lineHeight: 1.6, marginBottom: 8 }}>
             {'\u2705'} The AI generated a complete response — <strong>one word at a time</strong>.
           </div>
-          <div style={{ fontSize: 13, color: '#9ca3af', lineHeight: 1.7, marginBottom: 12 }}>
+          <div style={{ fontSize: 11, color: '#9ca3af', lineHeight: 1.6, marginBottom: 8 }}>
             It didn't "understand" the question. It calculated which word was most likely
             to come next, over and over. That's all it does.
           </div>
-          <div style={{ fontSize: 13, color: '#fbbf24', lineHeight: 1.7, marginBottom: 16 }}>
+          <div style={{ fontSize: 11, color: '#fbbf24', lineHeight: 1.6, marginBottom: 6 }}>
             This worked great here — but what happens when the AI doesn't have
             real data to predict from? {'\uD83E\uDD14'}
+          </div>
+          <div style={{ fontSize: 10, color: '#a78bfa', lineHeight: 1.5, padding: '6px 10px', background: '#7b68ee11', borderRadius: 4, marginBottom: 6 }}>
+            {'\uD83C\uDFB4'} <strong>New card: Prompt</strong> — A prompt is the text you give an AI to get a response.
+            It's the basic building block of every AI interaction. Better prompts = better results.
           </div>
           <button onClick={onComplete} style={btnStyle}>
             I get it — let's keep building! {'\u2192'}
@@ -202,14 +206,14 @@ export function S1_TextGeneration({ onComplete }: { onComplete: () => void }) {
 }
 
 const bubbleStyle: React.CSSProperties = {
-  background: '#1e2030', borderRadius: '16px 16px 16px 4px', padding: '12px 20px',
-  fontSize: 15, color: '#e0e0e0', border: '1px solid #2d2d5e', width: '100%',
+  background: '#1e2030', borderRadius: '12px 12px 12px 4px', padding: '8px 16px',
+  fontSize: 13, color: '#e0e0e0', border: '1px solid #2d2d5e', width: '100%',
 };
 
 const btnStyle: React.CSSProperties = {
-  padding: '12px 28px', background: '#7b68ee33', border: '2px solid #7b68ee',
-  borderRadius: 8, color: '#e0e0e0', fontFamily: 'monospace', fontWeight: 'bold',
-  fontSize: 14, cursor: 'pointer',
+  padding: '10px 24px', background: '#7b68ee33', border: '2px solid #7b68ee',
+  borderRadius: 6, color: '#e0e0e0', fontFamily: 'monospace', fontWeight: 'bold',
+  fontSize: 12, cursor: 'pointer',
 };
 
 const btnSmall: React.CSSProperties = {

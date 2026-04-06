@@ -231,7 +231,7 @@ function DetailOverlay({ entry, onClose }: {
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          maxWidth: 560, width: '90%', maxHeight: '80vh',
+          maxWidth: 560, width: '90%', maxHeight: 480,
           overflow: 'auto', padding: '32px 40px',
           background: 'rgba(12, 8, 24, 0.95)',
           border: `3px solid ${categoryColor}`,

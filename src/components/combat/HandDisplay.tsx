@@ -18,7 +18,7 @@ export function HandDisplay({ hand, energy, selectedIndex, onSelectCard }: HandD
         justifyContent: 'center',
         alignItems: 'flex-end',
         padding: '0 16px',
-        minHeight: 220,
+        minHeight: 170,
         overflowX: 'auto',
       }}
     >

@@ -134,40 +134,52 @@ export function MapScreen() {
 
   if (run.map.length === 0) return null;
 
-  const headerH = 52;
-  const legendH = 44;
-  const padY = 24;
-  const mapH = dims.h - headerH - legendH - padY * 2;
+  const headerH = 40;
+  const legendH = 28;
+  const padY = 16;
   const mapW = dims.w;
   // Use more horizontal space — spread lanes across 60% of width
   const gridW = mapW * 0.6;
   const colW = gridW / 3;
   const startX = (mapW - gridW) / 2;
-  // Cap vertical spacing so nodes aren't too spread on tall screens
-  const rowGap = Math.min(mapH / Math.max(run.map.length - 1, 1), 80);
-  const totalMapH = rowGap * (run.map.length - 1);
-  const mapOffsetY = (mapH - totalMapH) / 2; // center vertically if capped
+  // Fixed row gap — map scrolls if it doesn't fit
+  const rowGap = 56;
+  const totalMapH = rowGap * (run.map.length - 1) + padY * 2 + 60; // extra for boss node + bottom label
   const maxRow = run.map.length - 1;
 
   // FLIPPED: row 0 at bottom, boss at top
   const getX = (col: number) => startX + col * colW + colW / 2;
-  const getY = (row: number) => headerH + padY + mapOffsetY + rowGap * (maxRow - row);
+  const getY = (row: number) => padY + rowGap * (maxRow - row);
+
+  // Auto-scroll to show the current/next clickable node
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!scrollRef.current) return;
+    // Find the first unvisited reachable node and scroll to it
+    const lastId = run.visitedNodeIds[run.visitedNodeIds.length - 1];
+    let targetRow = 0;
+    if (lastId) {
+      for (const row of run.map) {
+        for (const n of row) {
+          if (n.id === lastId) {
+            // Next row's nodes are the targets
+            targetRow = Math.min(n.row + 1, maxRow);
+          }
+        }
+      }
+    }
+    // Scroll so the target row is visible (flipped: row 0 is at bottom)
+    const targetY = padY + rowGap * (maxRow - targetRow);
+    const viewH = dims.h - headerH - legendH;
+    scrollRef.current.scrollTop = Math.max(0, targetY - viewH / 2);
+  }, [run.visitedNodeIds.length]);
 
   return (
     <div ref={containerRef} style={{
       width: '100%', height: '100%',
-      position: 'relative', overflow: 'hidden',
+      display: 'flex', flexDirection: 'column',
       background: '#0c0a14',
     }}>
-      {/* Parchment background */}
-      <div style={{
-        position: 'absolute',
-        inset: 0,
-        backgroundImage: 'url(/sprites/map-bg.png)',
-        backgroundSize: 'cover',
-        imageRendering: 'pixelated',
-        opacity: 0.3,
-      }} />
 
       {/* Header — RPG panel style */}
       <div style={{
@@ -179,13 +191,13 @@ export function MapScreen() {
         alignItems: 'center',
         justifyContent: 'space-between',
         background: 'rgba(12, 8, 24, 0.9)',
-        borderBottom: '3px solid #6b4fa0',
+        borderBottom: '2px solid #6b4fa0',
         boxShadow: 'inset 0 -2px 0 #3d2d5c, 0 4px 12px rgba(0,0,0,0.5)',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{
             fontFamily: PIXEL,
-            fontSize: 12,
+            fontSize: 9,
             color: '#c4b89a',
             textShadow: PX_OUTLINE,
             letterSpacing: 1,
@@ -194,7 +206,7 @@ export function MapScreen() {
           </span>
           <RelicBar relicIds={run.relics} />
         </div>
-        <div style={{ display: 'flex', gap: 20, fontFamily: PIXEL, fontSize: 9 }}>
+        <div style={{ display: 'flex', gap: 14, fontFamily: PIXEL, fontSize: 7 }}>
           <span style={{ color: '#fbbf24', textShadow: PX_OUTLINE }}>
             {run.gold}g
           </span>
@@ -226,43 +238,66 @@ export function MapScreen() {
         </div>
       </div>
 
-      {/* SVG connections */}
-      <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 1 }}>
-        {run.map.map((row) =>
-          row.map((node) =>
-            node.connections.map((tid) => {
-              const nextRow = run.map[node.row + 1];
-              if (!nextRow) return null;
-              const target = nextRow.find((n) => n.id === tid);
-              if (!target) return null;
-              const x1 = getX(node.col);
-              const y1 = getY(node.row);
-              const x2 = getX(target.col);
-              const y2 = getY(target.row);
-              const active = node.visited && canVisit(target);
-              const visited = node.visited && target.visited;
-              return (
-                <line
-                  key={`${node.id}-${tid}`}
-                  x1={x1} y1={y1} x2={x2} y2={y2}
-                  stroke={visited ? 'rgba(168,130,255,0.2)' : active ? '#a882ff' : 'rgba(100,80,140,0.15)'}
-                  strokeWidth={active ? 3 : 2}
-                  strokeDasharray={active || visited ? '' : '4 6'}
-                />
-              );
-            })
-          )
-        )}
-      </svg>
+      {/* Scrollable map area */}
+      <div
+        ref={scrollRef}
+        style={{
+          flex: 1,
+          overflow: 'auto',
+          position: 'relative',
+        }}
+      >
+        {/* Parchment background */}
+        <div style={{
+          position: 'absolute',
+          top: 0, left: 0,
+          width: '100%',
+          height: totalMapH,
+          backgroundImage: 'url(/sprites/map-bg.png)',
+          backgroundSize: 'cover',
+          imageRendering: 'pixelated',
+          opacity: 0.3,
+        }} />
 
-      {/* Nodes */}
-      {run.map.map((row) =>
-        row.map((node) => {
-          const x = getX(node.col);
-          const y = getY(node.row);
+        {/* Inner container with full map height */}
+        <div style={{ position: 'relative', width: '100%', height: totalMapH }}>
+          {/* SVG connections */}
+          <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 1 }}>
+            {run.map.map((row) =>
+              row.map((node) =>
+                node.connections.map((tid) => {
+                  const nextRow = run.map[node.row + 1];
+                  if (!nextRow) return null;
+                  const target = nextRow.find((n) => n.id === tid);
+                  if (!target) return null;
+                  const x1 = getX(node.col);
+                  const y1 = getY(node.row);
+                  const x2 = getX(target.col);
+                  const y2 = getY(target.row);
+                  const active = node.visited && canVisit(target);
+                  const visited = node.visited && target.visited;
+                  return (
+                    <line
+                      key={`${node.id}-${tid}`}
+                      x1={x1} y1={y1} x2={x2} y2={y2}
+                      stroke={visited ? 'rgba(168,130,255,0.2)' : active ? '#a882ff' : 'rgba(100,80,140,0.15)'}
+                      strokeWidth={active ? 3 : 2}
+                      strokeDasharray={active || visited ? '' : '4 6'}
+                    />
+                  );
+                })
+              )
+            )}
+          </svg>
+
+          {/* Nodes */}
+          {run.map.map((row) =>
+            row.map((node) => {
+              const x = getX(node.col);
+              const y = getY(node.row);
           const clickable = canVisit(node);
           const color = NODE_COLORS[node.type];
-          const size = node.type === 'boss' ? 80 : 64;
+          const size = node.type === 'boss' ? 52 : 40;
 
           return (
             <div
@@ -299,7 +334,7 @@ export function MapScreen() {
               }}
             >
               <span style={{
-                fontSize: node.type === 'boss' ? 34 : 28,
+                fontSize: node.type === 'boss' ? 22 : 18,
                 filter: node.visited ? 'grayscale(1) opacity(0.3)' : clickable ? 'none' : 'grayscale(1) opacity(0.25)',
               }}>
                 {NODE_ICONS[node.type]}
@@ -310,7 +345,7 @@ export function MapScreen() {
                   position: 'absolute',
                   top: size + 4,
                   fontFamily: PIXEL,
-                  fontSize: 10,
+                  fontSize: 6,
                   color,
                   textShadow: PX_OUTLINE,
                   whiteSpace: 'nowrap',
@@ -323,28 +358,26 @@ export function MapScreen() {
           );
         })
       )}
+        </div>
+      </div>
 
       {/* Legend — RPG panel style */}
       <div style={{
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
         height: legendH,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 16,
+        gap: 12,
         background: 'rgba(12, 8, 24, 0.9)',
-        borderTop: '3px solid #6b4fa0',
+        borderTop: '2px solid #6b4fa0',
         boxShadow: 'inset 0 2px 0 #3d2d5c, 0 -4px 12px rgba(0,0,0,0.5)',
         zIndex: 2,
         fontFamily: PIXEL,
-        fontSize: 9,
+        fontSize: 5,
       }}>
         {Object.entries(NODE_ICONS).map(([type, icon]) => (
-          <span key={type} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <span style={{ fontSize: 14 }}>{icon}</span>
+          <span key={type} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            <span style={{ fontSize: 9 }}>{icon}</span>
             <span style={{ color: NODE_COLORS[type], textShadow: PX_OUTLINE, letterSpacing: 1 }}>
               {type}
             </span>

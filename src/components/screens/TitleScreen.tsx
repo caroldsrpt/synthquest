@@ -66,7 +66,7 @@ export function TitleScreen() {
       }}>
         <h1 style={{
           fontFamily: PIXEL,
-          fontSize: 'clamp(24px, 5vw, 48px)',
+          fontSize: 48,
           color: '#f0e6d3',
           textShadow: PX_OUTLINE + ', 0 0 40px rgba(168,130,255,0.5)',
           letterSpacing: 6,
@@ -76,7 +76,7 @@ export function TitleScreen() {
         </h1>
         <p style={{
           fontFamily: PIXEL,
-          fontSize: 'clamp(6px, 1.2vw, 10px)',
+          fontSize: 10,
           color: '#c4b89a',
           textShadow: PX_OUTLINE,
           letterSpacing: 4,
