@@ -20,7 +20,7 @@ export interface ByteSpeech {
 export const BYTE_SPEECHES: ByteSpeech[] = [
   {
     id: 'first_hand',
-    text: "These are your recipes! Drag one to play it.",
+    text: "Click a card to play it!",
     condition: ({ turn, phase }) => turn === 1 && phase === 'playerTurn',
   },
   {

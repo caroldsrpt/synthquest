@@ -8,7 +8,7 @@ import { resolveCardEffects, type EffectAnimations } from '../../game/systems/ef
 import { executeEnemyIntent as execEnemyIntent, processHallucinationCards, tickEnemyDebuffs, type EnemyAnimations } from '../../game/systems/enemyAI';
 import { HandDisplay } from '../combat/HandDisplay';
 import { EnemyDisplay } from '../combat/EnemyDisplay';
-import { PlayerStatus } from '../combat/PlayerStatus';
+// PlayerStatus removed — HP/Gold in header, energy in hand tray
 import { CARD_TIPS } from '../../game/data/cardTips';
 import { RewardOverlay } from '../combat/RewardOverlay';
 import { DeckViewerOverlay } from '../shared/DeckViewerOverlay';
@@ -16,10 +16,12 @@ import { RelicBar } from '../shared/RelicBar';
 import { PotionSlots } from '../combat/PotionSlots';
 import { SkillCheckOverlay } from '../combat/SkillCheckOverlay';
 import { ByteSpeechBubble } from '../combat/ByteSpeechBubble';
+import { ByteOverlays } from '../combat/ByteOverlays';
+import { PileIndicator } from '../combat/PileIndicator';
 import { CARD_SKILL_CHECKS } from '../../game/data/skillChecks';
 import type { SkillCheckType } from '../../game/data/skillChecks';
 import { POTIONS, generatePotionDrop } from '../../game/data/potions';
-import { POTION_DROP_RATE_NORMAL, POTION_DROP_RATE_ELITE, POTION_DROP_RATE_BOSS } from '../../utils/constants';
+import { POTION_DROP_RATE_NORMAL, POTION_DROP_RATE_ELITE, POTION_DROP_RATE_BOSS, COMBAT_HEADER_H, COMBAT_ARENA_H, COMBAT_HAND_H, BYTE_SPRITE_SIZE, COLORS } from '../../utils/constants';
 import { uid } from '../../utils/random';
 import type { CardInstance } from '../../game/data/types';
 
@@ -50,11 +52,15 @@ export function CombatScreen() {
     for (const card of combat.hand) {
       const tip = CARD_TIPS[card.defId];
       if (tip && !shownTips.includes(card.defId)) {
-        setActiveTip(tip);
-        run.markCardTipShown(card.defId);
-        // Auto-dismiss after 4 seconds
+        // Delay on turn 1 so speech bubble isn't competing
+        const delay = combat.turn === 1 ? 3000 : 0;
         if (tipTimerRef.current) clearTimeout(tipTimerRef.current);
-        tipTimerRef.current = setTimeout(() => setActiveTip(null), 4000);
+        tipTimerRef.current = setTimeout(() => {
+          setActiveTip(tip);
+          // Auto-dismiss after 8 seconds (click to dismiss early)
+          tipTimerRef.current = setTimeout(() => setActiveTip(null), 8000);
+        }, delay);
+        run.markCardTipShown(card.defId);
         break; // Only show one tip at a time
       }
     }
@@ -218,8 +224,10 @@ export function CombatScreen() {
 
   // Handle skill check completion — resolve the pending card with multiplier
   const handleSkillCheckResult = useCallback((multiplier: number) => {
-    if (!pendingSkillCheck) return;
-    const { handIndex, targetEnemyId } = pendingSkillCheck;
+    const check = pendingSkillCheck;
+    if (!check) return;
+    setPendingSkillCheck(null); // Clear overlay immediately
+    const { handIndex, targetEnemyId } = check;
     const card = combat.hand[handIndex];
     if (!card) { setPendingSkillCheck(null); return; }
     const def = CARDS[card.defId];
@@ -284,7 +292,6 @@ export function CombatScreen() {
       combat.setPhase('reward');
     }
 
-    setPendingSkillCheck(null);
   }, [combat, pendingSkillCheck]);
 
   // Auto-start first turn
@@ -508,6 +515,7 @@ export function CombatScreen() {
 
   const isTargeting = combat.targetingCardIndex !== null;
   const showHand = combat.phase === 'playerTurn';
+  const hpPct = Math.max(0, (run.currentIntegrity / run.maxIntegrity) * 100);
 
   return (
     <div style={{
@@ -538,18 +546,24 @@ export function CombatScreen() {
       {/* Header */}
       <div style={{
         position: 'relative', zIndex: 2,
-        padding: '6px 16px', fontSize: 9,
+        height: COMBAT_HEADER_H,
+        padding: '0 16px', fontSize: 9,
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         background: 'rgba(12, 8, 24, 0.9)',
         borderBottom: '2px solid #6b4fa0',
         boxShadow: 'inset 0 -1px 0 #3d2d5c',
+        flexShrink: 0,
         letterSpacing: 1,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ color: '#c4b89a' }}>Act {run.act} | Turn {combat.turn}</span>
+          <span style={{ color: hpPct > 50 ? COLORS.hp : hpPct > 25 ? COLORS.hpMid : COLORS.hpLow }}>
+            ❤️ {run.currentIntegrity}/{run.maxIntegrity}
+          </span>
+          <span style={{ color: COLORS.gold }}>💰 {run.gold}</span>
           <RelicBar relicIds={run.relics} />
         </div>
-        <span style={{ color: '#8a7a66', fontSize: 8 }}>{combat.log[combat.log.length - 1] || ''}</span>
+        <span style={{ color: '#8a7a66', fontSize: 8, flex: 1, textAlign: 'center', overflow: 'hidden', whiteSpace: 'nowrap' }}>{combat.log[combat.log.length - 1] || ''}</span>
         <button
           onClick={() => setShowDeck(true)}
           title="View your deck"
@@ -574,18 +588,19 @@ export function CombatScreen() {
       {/* Battle area: player left, enemies right */}
       <div
         style={{
-          flex: 1, display: 'flex', alignItems: 'flex-end',
+          height: COMBAT_ARENA_H, display: 'flex', alignItems: 'flex-end',
           justifyContent: 'center',
-          padding: '0 0 24px',
+          padding: 0,
           position: 'relative',
+          flexShrink: 0,
         }}
         onClick={() => isTargeting && combat.setTargeting(null)}
       >
         {/* Player character — Byte */}
         <div style={{
           position: 'absolute',
-          left: '18%',
-          bottom: '10%',
+          left: '15%',
+          bottom: '12%',
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
           zIndex: 2,
         }}>
@@ -593,8 +608,8 @@ export function CombatScreen() {
             src={BYTE_SPRITES[bytePose]}
             alt="Byte"
             style={{
-              width: 320,
-              height: 320,
+              width: BYTE_SPRITE_SIZE,
+              height: BYTE_SPRITE_SIZE,
               imageRendering: 'pixelated',
               animation: bytePose === 'hurt'
                 ? 'playerShake 0.4s ease-in-out'
@@ -610,6 +625,13 @@ export function CombatScreen() {
             }}
           />
           <ByteSpeechBubble />
+          <ByteOverlays
+            integrity={run.currentIntegrity}
+            maxIntegrity={run.maxIntegrity}
+            firewall={combat.playerFirewall}
+            statusEffects={combat.playerStatus}
+            activePowers={combat.activePowers}
+          />
           {/* Floating text on player */}
           {floats.filter((f) => f.target === 'player').map((f) => (
             <div key={f.id} style={{
@@ -674,19 +696,7 @@ export function CombatScreen() {
         )}
       </div>
 
-      {/* Player status */}
-      <PlayerStatus
-        integrity={run.currentIntegrity}
-        maxIntegrity={run.maxIntegrity}
-        firewall={combat.playerFirewall}
-        energy={combat.energy}
-        maxEnergy={combat.maxEnergy}
-        statusEffects={combat.playerStatus}
-        drawPileCount={combat.drawPile.length}
-        discardPileCount={combat.discardPile.length}
-        exhaustPileCount={combat.exhaustPile.length}
-        activePowers={combat.activePowers}
-      />
+      {/* Status bar removed — HP/Gold in header, energy orb in hand tray */}
 
       {/* Potion slots */}
       <div style={{ position: 'absolute', right: 20, top: 56, zIndex: 10 }}>
@@ -703,8 +713,12 @@ export function CombatScreen() {
       <div style={{
         borderTop: '2px solid #2d2d5e',
         background: 'rgba(15, 15, 35, 0.9)',
-        padding: '4px 0 4px',
-        minHeight: showHand ? 175 : 50,
+        padding: 0,
+        height: COMBAT_HAND_H,
+        flexShrink: 0,
+        overflow: 'visible',
+        position: 'relative',
+        zIndex: 1,
       }}>
         {showHand && (
           <HandDisplay
@@ -728,6 +742,29 @@ export function CombatScreen() {
         )}
 
         {combat.phase === 'reward' && null}
+
+        {/* Energy orb — big, bottom-left */}
+        <div style={{
+          position: 'absolute', left: 10, bottom: 50, zIndex: 15,
+          width: 42, height: 42,
+          background: COLORS.energy,
+          border: '2px solid #000',
+          boxShadow: `inset 0 0 0 2px ${COLORS.energy}, 0 0 8px ${COLORS.energy}55`,
+          borderRadius: '50%',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontFamily: "'Press Start 2P', monospace",
+          fontSize: 12, fontWeight: 'bold', color: '#0f0f23',
+        }}>
+          {combat.energy}/{combat.maxEnergy}
+        </div>
+
+        {/* Draw / Discard pile indicators in corners */}
+        <div style={{ position: 'absolute', left: 16, bottom: 8, zIndex: 10 }}>
+          <PileIndicator type="draw" count={combat.drawPile.length} />
+        </div>
+        <div style={{ position: 'absolute', right: 16, bottom: 8, zIndex: 10 }}>
+          <PileIndicator type="discard" count={combat.discardPile.length} />
+        </div>
       </div>
 
       {/* End Turn button */}
@@ -735,7 +772,7 @@ export function CombatScreen() {
         <button
           onClick={handleEndTurn}
           style={{
-            position: 'absolute', right: 12, bottom: 185,
+            position: 'absolute', right: 12, bottom: COMBAT_HAND_H + 4,
             padding: '8px 16px',
             background: 'rgba(12, 8, 24, 0.85)',
             border: '2px solid #6b4fa0',
@@ -810,16 +847,16 @@ export function CombatScreen() {
           onClick={dismissTip}
           style={{
             position: 'absolute',
-            bottom: showHand ? 250 : 100,
+            bottom: COMBAT_HAND_H + 8,
             left: '50%',
             transform: 'translateX(-50%)',
             zIndex: 40,
             background: 'rgba(12, 8, 24, 0.95)',
-            border: '3px solid #6b4fa0',
+            border: '2px solid #6b4fa0',
             boxShadow:
-              'inset 0 0 0 2px #1a1130, inset 0 0 0 4px #3d2d5c, 0 0 30px rgba(107,79,160,0.5)',
-            padding: '16px 24px 12px',
-            maxWidth: 480,
+              'inset 0 0 0 1px #1a1130, 0 0 20px rgba(107,79,160,0.4)',
+            padding: '8px 14px 6px',
+            maxWidth: 340,
             textAlign: 'center',
             cursor: 'pointer',
             animation: 'tipFadeIn 0.3s ease-out',
@@ -828,9 +865,9 @@ export function CombatScreen() {
           <div
             style={{
               fontFamily: "'Press Start 2P', monospace",
-              fontSize: 11,
+              fontSize: 9,
               color: '#a882ff',
-              marginBottom: 8,
+              marginBottom: 4,
               letterSpacing: 1,
             }}
           >
@@ -839,10 +876,10 @@ export function CombatScreen() {
           <div
             style={{
               fontFamily: 'monospace',
-              fontSize: 13,
+              fontSize: 11,
               color: '#c4b89a',
-              lineHeight: 1.5,
-              marginBottom: 10,
+              lineHeight: 1.4,
+              marginBottom: 6,
             }}
           >
             {activeTip.includes(':') ? activeTip.slice(activeTip.indexOf(':') + 1).trim() : activeTip}

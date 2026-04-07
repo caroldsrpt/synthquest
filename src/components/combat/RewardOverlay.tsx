@@ -47,20 +47,20 @@ export function RewardOverlay({
     border: '3px solid #6b4fa0',
     boxShadow:
       'inset 0 0 0 2px #1a1130, inset 0 0 0 4px #3d2d5c, 0 0 40px rgba(107,79,160,0.4)',
-    padding: '40px 60px',
+    padding: '24px 40px',
     textAlign: 'center',
     fontFamily: "'Press Start 2P', monospace",
-    maxWidth: 864,
+    maxWidth: 700,
   };
 
   const btnStyle: React.CSSProperties = {
-    padding: '14px 36px',
+    padding: '10px 28px',
     background: 'rgba(12, 8, 24, 0.85)',
-    border: '3px solid #6b4fa0',
-    boxShadow: 'inset 0 0 0 2px #1a1130, inset 0 0 0 4px #3d2d5c',
+    border: '2px solid #6b4fa0',
+    boxShadow: 'inset 0 0 0 1px #1a1130, inset 0 0 0 2px #3d2d5c',
     color: '#c4b89a',
     fontFamily: "'Press Start 2P', monospace",
-    fontSize: 14,
+    fontSize: 10,
     cursor: 'pointer',
     letterSpacing: 2,
   };
@@ -81,12 +81,12 @@ export function RewardOverlay({
         {/* VICTORY heading — always visible */}
         <div
           style={{
-            fontSize: 28,
+            fontSize: 18,
             fontWeight: 'bold',
             color: '#4ade80',
             textShadow:
-              '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 0 20px rgba(74,222,128,0.5)',
-            marginBottom: 16,
+              '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 16px rgba(74,222,128,0.5)',
+            marginBottom: 10,
             letterSpacing: 3,
           }}
         >
@@ -96,11 +96,11 @@ export function RewardOverlay({
         {/* Gold reward — always visible */}
         <div
           style={{
-            fontSize: 16,
+            fontSize: 11,
             color: '#fbbf24',
             textShadow:
               '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000',
-            marginBottom: 24,
+            marginBottom: 16,
           }}
         >
           + {goldReward} Gold
@@ -121,15 +121,15 @@ export function RewardOverlay({
         {step === 'relic' && relicReward && (
           <>
             <div style={{
-              padding: '16px 24px',
+              padding: '12px 18px',
               border: '2px solid #fbbf24',
               background: 'rgba(251, 191, 36, 0.1)',
-              marginBottom: 20,
+              marginBottom: 14,
             }}>
-              <div style={{ fontSize: 12, color: '#fbbf24', marginBottom: 8, letterSpacing: 1 }}>
+              <div style={{ fontSize: 10, color: '#fbbf24', marginBottom: 6, letterSpacing: 1 }}>
                 {relicReward.name}
               </div>
-              <div style={{ fontSize: 9, color: '#c4b89a', lineHeight: 1.6 }}>
+              <div style={{ fontSize: 8, color: '#c4b89a', lineHeight: 1.5 }}>
                 {relicReward.description}
               </div>
               <div style={{ fontSize: 7, color: '#6b7280', marginTop: 6, fontStyle: 'italic' }}>
@@ -159,9 +159,9 @@ export function RewardOverlay({
           <>
             <div
               style={{
-                fontSize: 12,
+                fontSize: 9,
                 color: '#a882ff',
-                marginBottom: 20,
+                marginBottom: 14,
                 letterSpacing: 1,
               }}
             >
@@ -171,9 +171,9 @@ export function RewardOverlay({
             <div
               style={{
                 display: 'flex',
-                gap: 24,
+                gap: 16,
                 justifyContent: 'center',
-                marginBottom: 24,
+                marginBottom: 16,
               }}
             >
               {rewardInstances.map((inst, i) => (
@@ -205,6 +205,7 @@ export function RewardOverlay({
                     selected={pickedIndex === i}
                     playable={pickedIndex === null}
                     onClick={() => handlePickCard(i)}
+                    wide
                   />
                 </div>
               ))}
@@ -233,9 +234,9 @@ export function RewardOverlay({
             {pickedIndex !== null && (
               <div
                 style={{
-                  fontSize: 11,
+                  fontSize: 9,
                   color: '#4ade80',
-                  marginBottom: 20,
+                  marginBottom: 14,
                   letterSpacing: 1,
                 }}
               >

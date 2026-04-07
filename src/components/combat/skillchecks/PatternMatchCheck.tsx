@@ -24,13 +24,13 @@ export function PatternMatchCheck({ onResult }: { onResult: (multiplier: number)
       setPhase('pick');
       setStartTime(Date.now());
     }, 1000);
-    // Auto-fail after 3s total
+    // Auto-fail after 4.5s total (1s show + 3.5s pick window)
     const timeout = setTimeout(() => {
       if (!resolved.current) {
         resolved.current = true;
         onResult(0.3);
       }
-    }, 3000);
+    }, 4500);
     return () => { clearTimeout(timer); clearTimeout(timeout); };
   }, []);
 
@@ -46,7 +46,7 @@ export function PatternMatchCheck({ onResult }: { onResult: (multiplier: number)
     else if (correct && elapsed < 1000) mult = 1.2;
     else if (correct) mult = 1.0;
     else mult = 0.4;
-    setTimeout(() => onResult(mult), 80);
+    setTimeout(() => onResult(mult), 350);
   };
 
   return (

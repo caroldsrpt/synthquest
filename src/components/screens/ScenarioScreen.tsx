@@ -158,6 +158,7 @@ export function ScenarioScreen() {
                     selected={false}
                     playable={true}
                     onClick={() => {}}
+                    wide
                   />
                 </div>
               )}

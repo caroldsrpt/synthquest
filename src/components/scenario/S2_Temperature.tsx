@@ -48,11 +48,11 @@ export function S2_Temperature({ onComplete }: { onComplete: () => void }) {
   };
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: 32, maxWidth: 600, margin: '0 auto', width: '100%' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px 32px', maxWidth: 600, margin: '0 auto', width: '100%' }}>
 
       {/* Intro context */}
-      <div style={{ textAlign: 'center', marginBottom: 4 }}>
-        <p style={{ fontSize: 13, color: '#9ca3af', lineHeight: 1.7 }}>
+      <div style={{ textAlign: 'center', marginBottom: 0 }}>
+        <p style={{ fontSize: 12, color: '#9ca3af', lineHeight: 1.5 }}>
           Remember how the AI picks the <strong style={{ color: '#a78bfa' }}>most likely</strong> next word?
           Temperature controls <em>how adventurous</em> those picks are.
         </p>
@@ -79,7 +79,7 @@ export function S2_Temperature({ onComplete }: { onComplete: () => void }) {
               onClick={() => handleSlider(i)}
               style={{
                 flex: 1,
-                padding: '12px 8px 10px',
+                padding: '8px 8px 6px',
                 background: isActive ? `${r.color}15` : '#0f0f2366',
                 border: `2px solid ${isActive ? r.color : wasTried ? '#2d2d5e' : '#1e2030'}`,
                 borderRadius: 8,
@@ -103,17 +103,17 @@ export function S2_Temperature({ onComplete }: { onComplete: () => void }) {
                 src={r.image}
                 alt={r.label}
                 style={{
-                  width: 80,
-                  height: 80,
+                  width: 56,
+                  height: 56,
                   imageRendering: 'pixelated',
                   marginBottom: 6,
                   filter: isActive ? 'none' : 'brightness(0.6)',
                   transition: 'filter 0.3s',
                 }}
               />
-              <div style={{ fontSize: 18, marginBottom: 2 }}>{r.emoji}</div>
-              <div style={{ fontSize: 12, fontWeight: 'bold', color: r.color }}>{r.label}</div>
-              <div style={{ fontSize: 10, color: '#6b7280', marginTop: 4, lineHeight: 1.4 }}>{r.description}</div>
+              <div style={{ fontSize: 14, marginBottom: 1 }}>{r.emoji}</div>
+              <div style={{ fontSize: 11, fontWeight: 'bold', color: r.color }}>{r.label}</div>
+              <div style={{ fontSize: 9, color: '#6b7280', marginTop: 2, lineHeight: 1.3 }}>{r.description}</div>
             </div>
           );
         })}
@@ -138,14 +138,14 @@ export function S2_Temperature({ onComplete }: { onComplete: () => void }) {
 
       {/* AI response */}
       <div style={{
-        background: '#0f0f23', border: `2px solid ${response.color}44`, borderRadius: 12,
-        padding: 20, width: '100%',
+        background: '#0f0f23', border: `2px solid ${response.color}44`, borderRadius: 8,
+        padding: '10px 16px', width: '100%',
         transition: 'border-color 0.3s',
       }}>
         <div style={{ fontSize: 11, color: '#7b68ee', marginBottom: 8 }}>
           {'\uD83E\uDD16'} AI Response:
         </div>
-        <div style={{ fontSize: 14, lineHeight: 1.7, color: '#e0e0e0' }}>
+        <div style={{ fontSize: 13, lineHeight: 1.5, color: '#e0e0e0' }}>
           {response.text}
         </div>
         {tempLevel === 2 && (
@@ -160,8 +160,8 @@ export function S2_Temperature({ onComplete }: { onComplete: () => void }) {
 
       {/* Real-world context */}
       <div style={{
-        fontSize: 12, color: '#7b68ee', lineHeight: 1.6, textAlign: 'center',
-        padding: '8px 16px', background: '#7b68ee11', borderRadius: 8, width: '100%',
+        fontSize: 11, color: '#7b68ee', lineHeight: 1.4, textAlign: 'center',
+        padding: '6px 12px', background: '#7b68ee11', borderRadius: 6, width: '100%',
       }}>
         {response.realWorld}
       </div>
@@ -170,10 +170,10 @@ export function S2_Temperature({ onComplete }: { onComplete: () => void }) {
       {!allTried ? (
         <div style={{
           textAlign: 'center',
-          padding: '12px 20px',
+          padding: '8px 16px',
           background: '#fbbf2411',
           border: '1px solid #fbbf2433',
-          borderRadius: 8,
+          borderRadius: 6,
           width: '100%',
         }}>
           <div style={{ fontSize: 13, color: '#fbbf24', marginBottom: 6 }}>
@@ -211,8 +211,8 @@ export function S2_Temperature({ onComplete }: { onComplete: () => void }) {
 }
 
 const bubbleStyle: React.CSSProperties = {
-  background: '#1e2030', borderRadius: '16px 16px 16px 4px', padding: '12px 20px',
-  fontSize: 15, color: '#e0e0e0', border: '1px solid #2d2d5e', width: '100%',
+  background: '#1e2030', borderRadius: '16px 16px 16px 4px', padding: '8px 16px',
+  fontSize: 14, color: '#e0e0e0', border: '1px solid #2d2d5e', width: '100%',
 };
 
 const btnStyle: React.CSSProperties = {

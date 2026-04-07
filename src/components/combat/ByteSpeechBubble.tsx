@@ -30,7 +30,7 @@ export function ByteSpeechBubble() {
       if (speech.condition(context)) {
         setText(speech.text);
         run.markTeachingShown(speech.id);
-        const timer = setTimeout(() => setText(null), 8000);
+        const timer = setTimeout(() => setText(null), 5000);
         return () => clearTimeout(timer);
       }
     }
@@ -43,15 +43,15 @@ export function ByteSpeechBubble() {
       onClick={() => setText(null)}
       style={{
         position: 'absolute',
-        left: '5%',
-        bottom: '55%',
+        left: '3%',
+        bottom: '60%',
         zIndex: 25,
-        padding: '14px 20px',
+        padding: '10px 14px',
         background: 'rgba(12, 8, 24, 0.95)',
-        border: '3px solid #a882ff',
-        boxShadow: '0 0 20px rgba(168,130,255,0.3), inset 0 0 0 2px #1a1130',
-        borderRadius: '16px 16px 16px 4px',
-        maxWidth: 300,
+        border: '2px solid #a882ff',
+        boxShadow: '0 0 16px rgba(168,130,255,0.3), inset 0 0 0 1px #1a1130',
+        borderRadius: '12px 12px 12px 4px',
+        maxWidth: 220,
         cursor: 'pointer',
         animation: 'tipFadeIn 0.3s ease-out',
       }}
@@ -79,9 +79,9 @@ export function ByteSpeechBubble() {
       }} />
       <div style={{
         fontFamily: PIXEL,
-        fontSize: 10,
+        fontSize: 9,
         color: '#e0d8c8',
-        lineHeight: 1.8,
+        lineHeight: 1.6,
         textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000',
       }}>
         {text}

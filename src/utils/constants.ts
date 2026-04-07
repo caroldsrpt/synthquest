@@ -1,6 +1,24 @@
 export const VIEWPORT_WIDTH = 960;
 export const VIEWPORT_HEIGHT = 600;
 
+// Combat layout zones (must sum to VIEWPORT_HEIGHT = 600)
+export const COMBAT_HEADER_H = 28;
+export const COMBAT_ARENA_H = 432;  // was 392 — gained 40px from removing status bar
+export const COMBAT_HAND_H = 140;
+
+// Sprite sizes (proportional to 960x600)
+export const BYTE_SPRITE_SIZE = 128;
+export const ENEMY_SPRITE_NORMAL = 96;
+export const ENEMY_SPRITE_ELITE = 112;
+export const ENEMY_SPRITE_BOSS = 140;
+
+// Card dimensions
+export const CARD_W = 90;
+export const CARD_H = 126;
+export const CARD_VISIBLE_H = 80;
+export const CARD_FAN_OVERLAP = 26;
+export const CARD_HOVER_LIFT = 90;
+
 // Combat balance
 export const BASE_ENERGY = 3;
 export const BASE_INTEGRITY = 70;

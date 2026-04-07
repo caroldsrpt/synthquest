@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 
 /** Hit 3 beats in sequence — rhythm game style. */
 export function BatchTimingCheck({ onResult }: { onResult: (multiplier: number) => void }) {
-  const [beats] = useState(() => [800, 1400, 2000]); // ms when beats arrive
+  const [beats] = useState(() => [1000, 1800, 2600]); // ms when beats arrive
   const [activeBeat, setActiveBeat] = useState(-1);
   const [hits, setHits] = useState(0);
   const [done, setDone] = useState(false);
@@ -23,8 +23,8 @@ export function BatchTimingCheck({ onResult }: { onResult: (multiplier: number) 
       setDone(true);
       const h = hitsRef.current;
       const mult = h === 3 ? 1.5 : h === 2 ? 1.2 : h === 1 ? 0.8 : 0.4;
-      setTimeout(() => onResult(mult), 80);
-    }, 2800));
+      setTimeout(() => onResult(mult), 350);
+    }, 3600));
     return () => timers.forEach(clearTimeout);
   }, []);
 

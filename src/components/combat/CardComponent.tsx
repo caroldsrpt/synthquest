@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { CardInstance } from '../../game/data/types';
 import { CARDS } from '../../game/data/cards';
 import { getCardCost, getCardName, getCardDescription } from '../../utils/cardUtils';
-import { COLORS } from '../../utils/constants';
+import { COLORS, CARD_W, CARD_H } from '../../utils/constants';
 
 const CATEGORY_ART: Record<string, string> = {
   text: '/sprites/card-text.png',
@@ -27,24 +27,26 @@ interface CardComponentProps {
   playable: boolean;
   onClick: (index: number) => void;
   small?: boolean;
+  wide?: boolean;
 }
 
 const KEYWORD_DESCRIPTIONS: Record<string, string> = {
   exhaust: 'EXHAUST — Removed from play after use. Cannot be drawn again this combat.',
   retain: 'RETAIN — Stays in your hand at end of turn instead of being discarded.',
   power: 'POWER — Plays once, effect lasts the entire combat.',
+  hallucination: 'HALLUCINATION — Curse cards shuffled into your deck. They clog your hand and can deal damage when discarded.',
 };
 
 const CATEGORY_DESCRIPTIONS: Record<string, string> = {
   text: 'TEXT — Generation and language model cards',
-  structure: 'STRUCTURE — Defense, grounding, and data cards',
+  structure: 'STRUCTURE — Firewall, grounding, and data cards',
   logic: 'LOGIC — Reasoning, tools, and planning cards',
   vision: 'VISION — Analysis and pattern recognition cards',
   noise: 'NOISE — Chaos, randomness, and risk cards',
   curse: 'CURSE — Harmful cards that clog your deck',
 };
 
-export function CardComponent({ card, index, selected, playable, onClick, small }: CardComponentProps) {
+export function CardComponent({ card, index, selected, playable, onClick, small, wide }: CardComponentProps) {
   const def = CARDS[card.defId];
   const [showTooltip, setShowTooltip] = useState(false);
   if (!def) return null;
@@ -54,8 +56,9 @@ export function CardComponent({ card, index, selected, playable, onClick, small 
   const desc = getCardDescription(card);
   const catColor = COLORS.categories[def.category] || '#888';
   const rarityColor = COLORS.rarity[def.rarity] || '#fff';
-  const w = small ? 100 : 120;
-  const h = small ? 140 : 170;
+  const w = wide ? 120 : small ? 80 : CARD_W;
+  const h = wide ? 168 : small ? 112 : CARD_H;
+  const nameFont = w >= 120 ? 9 : w >= 100 ? 8 : 7;
   const artSrc = CATEGORY_ART[def.category];
 
   return (
@@ -108,7 +111,7 @@ export function CardComponent({ card, index, selected, playable, onClick, small 
 
       {/* Card art area */}
       <div style={{
-        height: small ? 36 : 46,
+        height: small ? 32 : 40,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -143,21 +146,21 @@ export function CardComponent({ card, index, selected, playable, onClick, small 
         textTransform: 'uppercase',
         textShadow: PX_OUTLINE_SM,
       }}>
-        {def.category === 'curse' ? 'CURSE' : def.keywords?.includes('power') ? 'POWER' : def.target === 'self' ? 'BLOCK' : def.target === 'allEnemies' ? 'AOE' : def.target === 'none' ? 'UTILITY' : 'ATTACK'}
+        {def.category === 'curse' ? 'CURSE' : def.keywords?.includes('power') ? 'POWER' : def.target === 'self' ? 'FIREWALL' : def.target === 'allEnemies' ? 'AOE' : def.target === 'none' ? 'UTILITY' : 'ATTACK'}
       </div>
 
       {/* Name */}
       <div style={{
-        padding: '1px 6px 2px',
-        fontSize: small ? 7 : 8,
-        fontFamily: "'Press Start 2P', monospace",
+        padding: '1px 4px 2px',
+        fontSize: small ? 7 : nameFont,
+        fontFamily: 'monospace',
         fontWeight: 'bold',
         textAlign: 'center',
         color: card.upgraded ? COLORS.rarity.rare : '#e0e0e0',
         textShadow: PX_OUTLINE_SM,
-        wordBreak: 'break-word',
+        overflow: 'hidden',
         lineHeight: 1.2,
-        letterSpacing: 0.5,
+        letterSpacing: 0,
       }}>
         {name}
       </div>
@@ -165,11 +168,11 @@ export function CardComponent({ card, index, selected, playable, onClick, small 
       {/* Description */}
       <div style={{
         flex: 1,
-        padding: '2px 6px 4px',
-        fontSize: small ? 8 : 9,
+        padding: '1px 4px 3px',
+        fontSize: wide ? 9 : small ? 7 : 7,
         fontFamily: 'monospace',
         color: '#9ca3af',
-        lineHeight: 1.3,
+        lineHeight: 1.2,
         textAlign: 'center',
         overflow: 'hidden',
       }}>
@@ -235,6 +238,17 @@ export function CardComponent({ card, index, selected, playable, onClick, small 
                   {KEYWORD_DESCRIPTIONS[kw] || kw.toUpperCase()}
                 </div>
               ))}
+            </div>
+          )}
+          {/* Inline term explanations from card description */}
+          {desc.toLowerCase().includes('firewall') && (
+            <div style={{ fontSize: 7, color: '#60a5fa', lineHeight: 1.6, marginTop: 4 }}>
+              FIREWALL — Absorbs incoming damage before HP. Resets each turn.
+            </div>
+          )}
+          {desc.toLowerCase().includes('hallucination') && (
+            <div style={{ fontSize: 7, color: '#ef4444', lineHeight: 1.6, marginTop: 4 }}>
+              HALLUCINATION — Curse cards shuffled into your deck that clog your hand.
             </div>
           )}
           {card.upgraded && (

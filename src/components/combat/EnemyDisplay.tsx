@@ -1,6 +1,6 @@
 import type { EnemyInstance } from '../../game/data/types';
 import { ENEMIES } from '../../game/data/enemies';
-import { COLORS } from '../../utils/constants';
+import { COLORS, ENEMY_SPRITE_NORMAL, ENEMY_SPRITE_ELITE, ENEMY_SPRITE_BOSS } from '../../utils/constants';
 
 const PIXEL = "'Press Start 2P', monospace";
 
@@ -51,7 +51,7 @@ export function EnemyDisplay({ enemy, targeting, onClick, isHit, floats, halluci
   const intentIcon = getIntentIcon(enemy.currentIntent);
   const intentColor = getIntentColor(enemy.currentIntent);
   const sprite = ENEMY_SPRITES[enemy.defId];
-  const spriteSize = def.type === 'boss' ? 320 : def.type === 'elite' ? 256 : 224;
+  const spriteSize = def.type === 'boss' ? ENEMY_SPRITE_BOSS : def.type === 'elite' ? ENEMY_SPRITE_ELITE : ENEMY_SPRITE_NORMAL;
 
   return (
     <div
@@ -73,8 +73,8 @@ export function EnemyDisplay({ enemy, targeting, onClick, isHit, floats, halluci
       {!isDead && (
         <div style={{
           fontFamily: PIXEL,
-          fontSize: 12,
-          padding: '6px 12px',
+          fontSize: 10,
+          padding: '4px 8px',
           background: `${intentColor}22`,
           border: `2px solid ${intentColor}44`,
           color: intentColor,
@@ -150,7 +150,7 @@ export function EnemyDisplay({ enemy, targeting, onClick, isHit, floats, halluci
       {/* Name */}
       <div style={{
         fontFamily: PIXEL,
-        fontSize: 12,
+        fontSize: 10,
         fontWeight: 'bold',
         color: def.type === 'boss' ? '#ef4444' : def.type === 'elite' ? '#f59e0b' : '#c4b89a',
         textShadow: PX_OUTLINE_SM,
@@ -161,7 +161,7 @@ export function EnemyDisplay({ enemy, targeting, onClick, isHit, floats, halluci
       </div>
 
       {/* HP bar */}
-      <div style={{ width: 160 }}>
+      <div style={{ width: spriteSize }}>
         {enemy.firewall > 0 && (
           <div style={{
             fontFamily: PIXEL,
@@ -190,7 +190,7 @@ export function EnemyDisplay({ enemy, targeting, onClick, isHit, floats, halluci
         </div>
         <div style={{
           fontFamily: PIXEL,
-          fontSize: 10,
+          fontSize: 8,
           color: '#6b5c7a',
           textAlign: 'center',
           marginTop: 1,

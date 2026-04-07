@@ -110,7 +110,7 @@ export function GameOverScreen() {
       display: 'flex', flexDirection: 'column', alignItems: 'center',
       justifyContent: 'center',
       overflow: 'auto',
-      padding: '32px 16px',
+      padding: '12px 16px',
     }}>
       {/* Main panel */}
       <div style={{
@@ -119,13 +119,13 @@ export function GameOverScreen() {
         background: 'rgba(15, 15, 35, 0.95)',
         border: `2px solid ${COLORS.accent}`,
         borderRadius: 8,
-        padding: '32px 28px',
+        padding: '16px 24px',
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         boxShadow: '0 0 40px rgba(123, 104, 238, 0.15), inset 0 0 60px rgba(0,0,0,0.5)',
       }}>
         {/* DEFEAT header */}
         <h1 style={{
-          fontSize: 40,
+          fontSize: 28,
           color: COLORS.hpLow,
           margin: '0 0 4px',
           fontWeight: 'bold',
@@ -138,7 +138,7 @@ export function GameOverScreen() {
         <div style={{
           width: 120, height: 2,
           background: `linear-gradient(90deg, transparent, ${COLORS.hpLow}, transparent)`,
-          margin: '8px 0 20px',
+          margin: '4px 0 12px',
         }} />
 
         {/* What happened */}
@@ -147,10 +147,10 @@ export function GameOverScreen() {
           background: 'rgba(239, 68, 68, 0.08)',
           border: '1px solid rgba(239, 68, 68, 0.25)',
           borderRadius: 6,
-          padding: '14px 16px',
-          marginBottom: 16,
+          padding: '10px 14px',
+          marginBottom: 10,
         }}>
-          <div style={{ fontSize: 8, color: COLORS.hpLow, marginBottom: 8, letterSpacing: 1 }}>
+          <div style={{ fontSize: 8, color: COLORS.hpLow, marginBottom: 4, letterSpacing: 1 }}>
             WHAT HAPPENED
           </div>
           <div style={{ fontSize: 10, lineHeight: 1.8, color: COLORS.text }}>
@@ -165,17 +165,17 @@ export function GameOverScreen() {
           background: 'rgba(123, 104, 238, 0.08)',
           border: '1px solid rgba(123, 104, 238, 0.3)',
           borderRadius: 6,
-          padding: '14px 16px',
-          marginBottom: 16,
+          padding: '10px 14px',
+          marginBottom: 10,
         }}>
-          <div style={{ fontSize: 8, color: COLORS.accent, marginBottom: 8, letterSpacing: 1 }}>
+          <div style={{ fontSize: 8, color: COLORS.accent, marginBottom: 4, letterSpacing: 1 }}>
             {advice.title.toUpperCase()}
           </div>
-          <div style={{ fontSize: 9, lineHeight: 1.8, color: '#b0b0c8', marginBottom: 10 }}>
+          <div style={{ fontSize: 9, lineHeight: 1.5, color: '#b0b0c8', marginBottom: 8 }}>
             {advice.explanation}
           </div>
           <div style={{
-            fontSize: 9, lineHeight: 1.8,
+            fontSize: 9, lineHeight: 1.5,
             color: '#a78bfa',
             borderTop: '1px solid rgba(123, 104, 238, 0.2)',
             paddingTop: 10,
@@ -189,22 +189,13 @@ export function GameOverScreen() {
         <div style={{
           width: '100%',
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr 1fr',
-          gap: 10,
-          marginBottom: 16,
+          gridTemplateColumns: 'repeat(5, 1fr)',
+          gap: 8,
+          marginBottom: 10,
         }}>
           <StatBox label="TURNS" value={String(turnsSurvived)} color={COLORS.text} />
-          <StatBox label="DECK SIZE" value={String(cardsInDeck)} color={COLORS.text} />
+          <StatBox label="DECK" value={String(cardsInDeck)} color={COLORS.text} />
           <StatBox label="GOLD" value={String(run.gold)} color={COLORS.gold} />
-        </div>
-
-        <div style={{
-          width: '100%',
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 10,
-          marginBottom: 20,
-        }}>
           <StatBox label="RELICS" value={String(run.relics.length)} color={COLORS.accent} />
           <StatBox label="FLOOR" value={String(run.floor)} color={COLORS.text} />
         </div>
@@ -215,8 +206,8 @@ export function GameOverScreen() {
           background: 'rgba(74, 222, 128, 0.06)',
           border: '1px solid rgba(74, 222, 128, 0.2)',
           borderRadius: 6,
-          padding: '14px 16px',
-          marginBottom: 24,
+          padding: '10px 14px',
+          marginBottom: 14,
         }}>
           <div style={{ fontSize: 8, color: COLORS.hp, marginBottom: 8, letterSpacing: 1 }}>
             CONCEPTS UNLOCKED THIS RUN
@@ -265,7 +256,7 @@ export function GameOverScreen() {
         <button
           onClick={handleRetry}
           style={{
-            padding: '14px 48px',
+            padding: '10px 40px',
             fontSize: 12,
             fontFamily: PIXEL_FONT,
             fontWeight: 'bold',
@@ -299,7 +290,7 @@ function StatBox({ label, value, color }: { label: string; value: string; color:
       background: 'rgba(255,255,255,0.03)',
       border: `1px solid ${COLORS.border}`,
       borderRadius: 6,
-      padding: '10px 12px',
+      padding: '8px 6px',
       textAlign: 'center',
     }}>
       <div style={{ fontSize: 7, color: COLORS.textDim, marginBottom: 6, letterSpacing: 1 }}>
